@@ -1,100 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bowling Party!!! (Web-App Companion)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       background: #111;
       color: #fff;
+      text-align: center;
       margin: 0;
-      padding: 20px;
-      transition: background 0.3s, color 0.3s;
-    }
-    body.light {
-      background: #fefefe;
-      color: #111;
+      padding: 0;
     }
     h1 {
-      font-size: 2.2em;
-      margin-bottom: 20px;
+      margin: 20px;
+      font-size: 2em;
     }
-    select {
-      font-size: 1.2em;
-      padding: 6px;
-      margin: 6px auto;
-      text-align: center;
-      border-radius: 8px;
-      border: none;
-      width: 280px;
-      max-width: 90%;
-      display: block;
-    }
-    input {
-      font-size: 1.2em;
-      padding: 6px;
-      margin: 3px;
-      text-align: center;
-      border-radius: 8px;
-      border: none;
-    }
-    table {
+    .setup, .game {
       margin: 20px auto;
-      border-collapse: collapse;
-      width: 95%;
-      max-width: 900px;
+      max-width: 95%;
     }
-    th, td {
-      border: 2px solid currentColor;
-      padding: 8px;
-      font-size: 1em;
-      text-align: center;
-    }
-    .frame-inputs {
-      display: flex;
-      justify-content: center;
-      gap: 4px;
-      margin-bottom: 4px;
-    }
-    .score {
-      font-weight: bold;
+    select, input[type="number"] {
       font-size: 1.2em;
-      color: #0f0;
+      padding: 8px;
+      margin: 8px;
+      width: 260px;
+      text-align: center;
     }
     button {
+      padding: 12px 20px;
+      margin: 20px;
       font-size: 1.2em;
-      padding: 10px 20px;
-      margin: 10px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       background: #28a745;
-      color: #fff;
+      color: white;
       cursor: pointer;
     }
     button:hover {
       background: #218838;
     }
-    .toggle-btn {
-      background: #007bff;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px auto;
     }
-    .toggle-btn:hover {
-      background: #0056b3;
+    th, td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: center;
+      font-size: 1.1em;
     }
-    .results {
-      margin-top: 25px;
-      font-size: 1.5em;
+    th {
+      background: #222;
+    }
+    input.frameInput {
+      width: 40px;
+      font-size: 1.1em;
+      text-align: center;
+    }
+    .final-scores {
+      margin-top: 30px;
+      font-size: 1.3em;
     }
   </style>
 </head>
 <body>
-  <h1>🎳 Bowling Party!!! (Web-App Companion) 🎉</h1>
-  <button class="toggle-btn" onclick="toggleTheme()">🌙 Toggle Theme ☀️</button>
-  <div id="setup"></div>
-  <button onclick="startGame()">Start Game</button>
-  <div id="scoreArea"></div>
-  <div id="results"></div>
+  <h1>Bowling Party!!! (Web-App Companion)</h1>
+  
+  <div class="setup">
+    <label for="playerCount">Select Number of Players (1–10): </label>
+    <input type="number" id="playerCount" min="1" max="10" value="2"/>
+    <button onclick="createPlayerSelectors()">Set Players</button>
+    <div id="playerSelectors"></div>
+    <button id="startBtn" style="display:none;" onclick="startGame()">Start Game</button>
+  </div>
+
+  <div class="game" id="game" style="display:none;"></div>
 
   <script>
     const archetypes = [
@@ -112,165 +95,137 @@
       { name: "Amanda", handicap: 32, average: 164 }
     ];
 
-    let team1Players = [];
-    let team2Players = [];
+    let players = [];
 
-    function setupTeams() {
-      let setupDiv = document.getElementById("setup");
-      setupDiv.innerHTML = `
-        <h2>🎳 Select Players 🎳</h2>
-        <h3>Team 1</h3>
-        ${generateTeamSelects("team1")}
-        <h3>Team 2</h3>
-        ${generateTeamSelects("team2")}
-      `;
-    }
-
-    function generateTeamSelects(team) {
-      let html = "";
-      for (let i = 0; i < 5; i++) {
-        html += `
-          <label>Player ${i+1}:</label>
-          <select id="${team}player${i}">
-            <option value="">-- Empty Slot --</option>
-            ${archetypes.map(a => `<option value="${a.name}">${a.name} (H: ${a.handicap}, Avg: ${a.average})</option>`).join("")}
-          </select><br/>
-        `;
+    function createPlayerSelectors() {
+      const count = parseInt(document.getElementById("playerCount").value);
+      if (count < 1 || count > 10) {
+        alert("Players must be between 1 and 10");
+        return;
       }
-      return html;
+      const container = document.getElementById("playerSelectors");
+      container.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        const select = document.createElement("select");
+        select.id = "playerSelect" + i;
+        archetypes.forEach(a => {
+          const option = document.createElement("option");
+          option.value = a.name;
+          option.textContent = `${a.name} (Avg: ${a.average}, Hcp: ${a.handicap})`;
+          select.appendChild(option);
+        });
+        container.appendChild(select);
+        container.appendChild(document.createElement("br"));
+      }
+      document.getElementById("startBtn").style.display = "inline-block";
     }
 
     function startGame() {
-      team1Players = [];
-      team2Players = [];
-      for (let i = 0; i < 5; i++) {
-        let p1 = document.getElementById(`team1player${i}`).value;
-        let p2 = document.getElementById(`team2player${i}`).value;
-        if (p1) team1Players.push(JSON.parse(JSON.stringify(archetypes.find(a => a.name === p1))));
-        if (p2) team2Players.push(JSON.parse(JSON.stringify(archetypes.find(a => a.name === p2))));
+      const count = parseInt(document.getElementById("playerCount").value);
+      players = [];
+      for (let i = 0; i < count; i++) {
+        const name = document.getElementById("playerSelect" + i).value;
+        const archetype = archetypes.find(a => a.name === name);
+        players.push({
+          name: archetype.name,
+          average: archetype.average,
+          handicap: archetype.handicap,
+          frames: Array(10).fill(null).map(() => []),
+          scores: Array(10).fill(null)
+        });
       }
-      renderScoreTables();
+      renderGame();
     }
 
-    function renderScoreTables() {
-      let area = document.getElementById("scoreArea");
-      area.innerHTML = "";
-      area.innerHTML += `<h2>🎳 Team 1 🎳</h2>` + generateTable(team1Players, "team1");
-      area.innerHTML += `<h2>🎳 Team 2 🎳</h2>` + generateTable(team2Players, "team2");
-      area.innerHTML += `<button onclick="calculateResults()">Show Results</button>`;
-    }
-
-    function generateTable(players, team) {
-      let html = `<table><tr><th>Player</th>`;
-      for (let f = 1; f <= 10; f++) {
-        html += `<th>Frame ${f}</th>`;
+    function renderGame() {
+      const container = document.getElementById("game");
+      container.style.display = "block";
+      let html = "<table><tr><th>Player</th>";
+      for (let i = 1; i <= 10; i++) {
+        html += `<th>Frame ${i}</th>`;
       }
-      html += `<th>Total</th></tr>`;
+      html += "<th>Total</th></tr>";
+
       players.forEach((p, idx) => {
         html += `<tr><td>${p.name}</td>`;
-        for (let f = 1; f <= 10; f++) {
-          html += `<td><div class="frame-inputs">`;
-          html += `<input id="${team}_${idx}_f${f}_1" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
-          html += `<input id="${team}_${idx}_f${f}_2" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
-          if (f === 10) {
-            html += `<input id="${team}_${idx}_f${f}_3" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
+        for (let f = 0; f < 10; f++) {
+          html += `<td id="p${idx}f${f}">`;
+          let maxInputs = (f === 9) ? 3 : 2;
+          for (let k = 0; k < maxInputs; k++) {
+            html += `<input class="frameInput" maxlength="1" oninput="updateFrame(${idx}, ${f})"/>`;
           }
-          html += `</div><div id="${team}_${idx}_f${f}_score"></div></td>`;
+          html += `<div class="frameScore" id="p${idx}f${f}score"></div></td>`;
         }
-        html += `<td class="score" id="${team}_${idx}_total">0</td></tr>`;
+        html += `<td id="p${idx}total"></td></tr>`;
       });
-      html += `</table>`;
-      return html;
+
+      html += "</table>";
+      html += `<button onclick="calculateWinner()">Calculate Winner</button>`;
+      html += `<div class="final-scores" id="finalScores"></div>`;
+      container.innerHTML = html;
     }
 
-    function parseRoll(input) {
-      if (!input) return null;
-      if (input.toUpperCase() === "X") return 10;
-      if (input === "-") return 0;
-      if (input === "/") return "/";
-      let val = parseInt(input);
-      return isNaN(val) ? null : val;
+    function parseInput(val) {
+      if (val === "X") return 10;
+      if (val === "/") return "/";
+      if (val === "-") return 0;
+      let num = parseInt(val);
+      return isNaN(num) ? null : num;
     }
 
-    function updateScore(team, idx) {
-      let players = team === "team1" ? team1Players : team2Players;
-      let p = players[idx];
+    function updateFrame(pIdx, fIdx) {
+      const player = players[pIdx];
+      const frameDiv = document.getElementById(`p${pIdx}f${fIdx}score`);
+      const frameInputs = document.querySelectorAll(`#p${pIdx}f${fIdx} input`);
       let rolls = [];
-      let frameRolls = []; // store per-frame inputs for completion check
-
-      for (let f = 1; f <= 10; f++) {
-        let r1 = parseRoll(document.getElementById(`${team}_${idx}_f${f}_1`).value);
-        let r2 = parseRoll(document.getElementById(`${team}_${idx}_f${f}_2`).value);
-        let r3 = f === 10 ? parseRoll(document.getElementById(`${team}_${idx}_f${f}_3`).value) : null;
-        frameRolls[f-1] = [r1, r2, r3];
-        if (r1 !== null) rolls.push(r1);
-        if (r2 !== null) {
-          if (r2 === "/") r2 = 10 - (r1 || 0);
-          rolls.push(r2);
-        }
-        if (r3 !== null) rolls.push(r3);
+      frameInputs.forEach(inp => {
+        rolls.push(parseInput(inp.value));
+      });
+      if (rolls.some(r => r === null)) {
+        frameDiv.innerText = "";
+        return;
       }
-
-      let {frameScores, total} = calculateBowlingScore(rolls);
-      total += p.handicap;
-
-      for (let f = 1; f <= frameScores.length; f++) {
-        let [r1, r2, r3] = frameRolls[f-1];
-        let complete = false;
-        if (f < 10) {
-          complete = (r1 !== null && (r1 === 10 || r2 !== null));
-        } else {
-          complete = (r1 !== null && (r2 !== null || r1 === 10) );
-        }
-        document.getElementById(`${team}_${idx}_f${f}_score`).innerText = complete ? frameScores[f-1] : "";
-      }
-
-      document.getElementById(`${team}_${idx}_total`).innerText = total;
-      p.total = total;
+      player.frames[fIdx] = rolls;
+      calculateScores(pIdx);
     }
 
-    function calculateBowlingScore(rolls) {
-      let score = 0;
-      let frameScores = [];
-      let rollIndex = 0;
-      for (let frame = 0; frame < 10; frame++) {
-        if (rolls[rollIndex] === 10) {
-          score += 10 + (rolls[rollIndex+1] || 0) + (rolls[rollIndex+2] || 0);
-          frameScores.push(score);
-          rollIndex++;
-        } else {
-          let frameSum = (rolls[rollIndex] || 0) + (rolls[rollIndex+1] || 0);
-          if (frameSum === 10) {
-            score += 10 + (rolls[rollIndex+2] || 0);
+    function calculateScores(pIdx) {
+      const player = players[pIdx];
+      let total = 0;
+      for (let f = 0; f < 10; f++) {
+        let frame = player.frames[f];
+        if (frame.includes(null) || frame.length === 0) {
+          document.getElementById(`p${pIdx}f${f}score`).innerText = "";
+          continue;
+        }
+        let frameScore = 0;
+        if (f < 9) {
+          if (frame[0] === 10) {
+            frameScore = 10;
+          } else if (frame[1] === "/") {
+            frameScore = 10;
           } else {
-            score += frameSum;
+            frameScore = (frame[0] || 0) + (frame[1] || 0);
           }
-          frameScores.push(score);
-          rollIndex += 2;
+        } else {
+          frameScore = frame.reduce((a, b) => a + (b === "/" ? 10 : b || 0), 0);
         }
+        total += frameScore;
+        document.getElementById(`p${pIdx}f${f}score`).innerText = total;
       }
-      return {frameScores, total: score};
+      document.getElementById(`p${pIdx}total`).innerText = total + player.handicap;
+      player.total = total + player.handicap;
     }
 
-    function calculateResults() {
-      let t1 = team1Players.reduce((a,b) => a + (b.total||0), 0);
-      let t2 = team2Players.reduce((a,b) => a + (b.total||0), 0);
-      let res = document.getElementById("results");
-      let winner = t1 === t2 ? "🤝 It's a Tie!" : (t1 > t2 ? "🎉 Team 1 Wins! 🎉" : "🎉 Team 2 Wins! 🎉");
-      res.innerHTML = `
-        <div class="results">
-          Team 1 Total: ${t1} 🎳<br/>
-          Team 2 Total: ${t2} 🎳<br/>
-          <b>${winner}</b>
-        </div>
-      `;
+    function calculateWinner() {
+      let team1 = players.slice(0, 5).reduce((a, b) => a + (b.total || 0), 0);
+      let team2 = players.slice(5, 10).reduce((a, b) => a + (b.total || 0), 0);
+      let result = `<p>Team 1: ${team1}</p><p>Team 2: ${team2}</p>`;
+      if (team1 > team2) result += "<p>🏆 Team 1 Wins!</p>";
+      else if (team2 > team1) result += "<p>🏆 Team 2 Wins!</p>";
+      else result += "<p>It's a Tie!</p>";
+      document.getElementById("finalScores").innerHTML = result;
     }
-
-    function toggleTheme() {
-      document.body.classList.toggle("light");
-    }
-
-    setupTeams();
   </script>
 </body>
 </html>

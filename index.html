@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bowling Party!!! (Web-App Companion)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.light {
+      background: #fefefe;
+      color: #111;
+    }
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+    }
+    select {
+      font-size: 1.2em;
+      padding: 6px;
+      margin: 6px auto;
+      text-align: center;
+      border-radius: 8px;
+      border: none;
+      width: 280px;
+      max-width: 90%;
+      display: block;
+    }
+    input {
+      font-size: 1.2em;
+      padding: 6px;
+      margin: 3px;
+      text-align: center;
+      border-radius: 8px;
+      border: none;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 95%;
+      max-width: 900px;
+    }
+    th, td {
+      border: 2px solid currentColor;
+      padding: 8px;
+      font-size: 1em;
+      text-align: center;
+    }
+    .frame-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .score {
+      font-weight: bold;
+      font-size: 1.2em;
+      color: #0f0;
+    }
+    button {
+      font-size: 1.2em;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #28a745;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .toggle-btn {
+      background: #007bff;
+    }
+    .toggle-btn:hover {
+      background: #0056b3;
+    }
+    .results {
+      margin-top: 25px;
+      font-size: 1.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎳 Bowling Party!!! (Web-App Companion) 🎉</h1>
+  <button class="toggle-btn" onclick="toggleTheme()">🌙 Toggle Theme ☀️</button>
+  <div id="setup"></div>
+  <button onclick="startGame()">Start Game</button>
+  <div id="scoreArea"></div>
+  <div id="results"></div>
+
+  <script>
+    const archetypes = [
+      { name: "Tilly", handicap: 39, average: 166 },
+      { name: "Debbie", handicap: 71, average: 121 },
+      { name: "Robert", handicap: -59, average: 279 },
+      { name: "Samuel", handicap: 19, average: 188 },
+      { name: "Peyton", handicap: -27, average: 241 },
+      { name: "Amara", handicap: -40, average: 255 },
+      { name: "Tito", handicap: 27, average: 180 },
+      { name: "Wendy", handicap: -46, average: 262 },
+      { name: "David", handicap: 32, average: 174 },
+      { name: "Marcus", handicap: 49, average: 156 },
+      { name: "Jacob", handicap: 58, average: 145 },
+      { name: "Amanda", handicap: 32, average: 164 }
+    ];
+
+    let team1Players = [];
+    let team2Players = [];
+
+    function setupTeams() {
+      let setupDiv = document.getElementById("setup");
+      setupDiv.innerHTML = `
+        <h2>🎳 Select Players 🎳</h2>
+        <h3>Team 1</h3>
+        ${generateTeamSelects("team1")}
+        <h3>Team 2</h3>
+        ${generateTeamSelects("team2")}
+      `;
+    }
+
+    function generateTeamSelects(team) {
+      let html = "";
+      for (let i = 0; i < 5; i++) {
+        html += `
+          <label>Player ${i+1}:</label>
+          <select id="${team}player${i}">
+            <option value="">-- Empty Slot --</option>
+            ${archetypes.map(a => `<option value="${a.name}">${a.name} (H: ${a.handicap}, Avg: ${a.average})</option>`).join("")}
+          </select><br/>
+        `;
+      }
+      return html;
+    }
+
+    function startGame() {
+      team1Players = [];
+      team2Players = [];
+      for (let i = 0; i < 5; i++) {
+        let p1 = document.getElementById(`team1player${i}`).value;
+        let p2 = document.getElementById(`team2player${i}`).value;
+        if (p1) team1Players.push(JSON.parse(JSON.stringify(archetypes.find(a => a.name === p1))));
+        if (p2) team2Players.push(JSON.parse(JSON.stringify(archetypes.find(a => a.name === p2))));
+      }
+      renderScoreTables();
+    }
+
+    function renderScoreTables() {
+      let area = document.getElementById("scoreArea");
+      area.innerHTML = "";
+      area.innerHTML += `<h2>🎳 Team 1 🎳</h2>` + generateTable(team1Players, "team1");
+      area.innerHTML += `<h2>🎳 Team 2 🎳</h2>` + generateTable(team2Players, "team2");
+      area.innerHTML += `<button onclick="calculateResults()">Show Results</button>`;
+    }
+
+    function generateTable(players, team) {
+      let html = `<table><tr><th>Player</th>`;
+      for (let f = 1; f <= 10; f++) {
+        html += `<th>Frame ${f}</th>`;
+      }
+      html += `<th>Total</th></tr>`;
+      players.forEach((p, idx) => {
+        html += `<tr><td>${p.name}</td>`;
+        for (let f = 1; f <= 10; f++) {
+          html += `<td><div class="frame-inputs">`;
+          html += `<input id="${team}_${idx}_f${f}_1" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
+          html += `<input id="${team}_${idx}_f${f}_2" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
+          if (f === 10) {
+            html += `<input id="${team}_${idx}_f${f}_3" size="1" maxlength="1" oninput="updateScore('${team}',${idx})">`;
+          }
+          html += `</div><div id="${team}_${idx}_f${f}_score"></div></td>`;
+        }
+        html += `<td class="score" id="${team}_${idx}_total">0</td></tr>`;
+      });
+      html += `</table>`;
+      return html;
+    }
+
+    function parseRoll(input) {
+      if (!input) return null;
+      if (input.toUpperCase() === "X") return 10;
+      if (input === "-") return 0;
+      if (input === "/") return "/";
+      let val = parseInt(input);
+      return isNaN(val) ? null : val;
+    }
+
+    function updateScore(team, idx) {
+      let players = team === "team1" ? team1Players : team2Players;
+      let p = players[idx];
+      let rolls = [];
+      let frameRolls = []; // store per-frame inputs for completion check
+
+      for (let f = 1; f <= 10; f++) {
+        let r1 = parseRoll(document.getElementById(`${team}_${idx}_f${f}_1`).value);
+        let r2 = parseRoll(document.getElementById(`${team}_${idx}_f${f}_2`).value);
+        let r3 = f === 10 ? parseRoll(document.getElementById(`${team}_${idx}_f${f}_3`).value) : null;
+        frameRolls[f-1] = [r1, r2, r3];
+        if (r1 !== null) rolls.push(r1);
+        if (r2 !== null) {
+          if (r2 === "/") r2 = 10 - (r1 || 0);
+          rolls.push(r2);
+        }
+        if (r3 !== null) rolls.push(r3);
+      }
+
+      let {frameScores, total} = calculateBowlingScore(rolls);
+      total += p.handicap;
+
+      for (let f = 1; f <= frameScores.length; f++) {
+        let [r1, r2, r3] = frameRolls[f-1];
+        let complete = false;
+        if (f < 10) {
+          complete = (r1 !== null && (r1 === 10 || r2 !== null));
+        } else {
+          complete = (r1 !== null && (r2 !== null || r1 === 10) );
+        }
+        document.getElementById(`${team}_${idx}_f${f}_score`).innerText = complete ? frameScores[f-1] : "";
+      }
+
+      document.getElementById(`${team}_${idx}_total`).innerText = total;
+      p.total = total;
+    }
+
+    function calculateBowlingScore(rolls) {
+      let score = 0;
+      let frameScores = [];
+      let rollIndex = 0;
+      for (let frame = 0; frame < 10; frame++) {
+        if (rolls[rollIndex] === 10) {
+          score += 10 + (rolls[rollIndex+1] || 0) + (rolls[rollIndex+2] || 0);
+          frameScores.push(score);
+          rollIndex++;
+        } else {
+          let frameSum = (rolls[rollIndex] || 0) + (rolls[rollIndex+1] || 0);
+          if (frameSum === 10) {
+            score += 10 + (rolls[rollIndex+2] || 0);
+          } else {
+            score += frameSum;
+          }
+          frameScores.push(score);
+          rollIndex += 2;
+        }
+      }
+      return {frameScores, total: score};
+    }
+
+    function calculateResults() {
+      let t1 = team1Players.reduce((a,b) => a + (b.total||0), 0);
+      let t2 = team2Players.reduce((a,b) => a + (b.total||0), 0);
+      let res = document.getElementById("results");
+      let winner = t1 === t2 ? "🤝 It's a Tie!" : (t1 > t2 ? "🎉 Team 1 Wins! 🎉" : "🎉 Team 2 Wins! 🎉");
+      res.innerHTML = `
+        <div class="results">
+          Team 1 Total: ${t1} 🎳<br/>
+          Team 2 Total: ${t2} 🎳<br/>
+          <b>${winner}</b>
+        </div>
+      `;
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    setupTeams();
+  </script>
+</body>
+</html>

@@ -22,16 +22,16 @@
       font-size: 2em;
     }
     select, input[type="number"] {
-      font-size: 1.2em;
-      padding: 8px;
-      margin: 8px;
-      width: 260px;
+      font-size: 1.1em;
+      padding: 6px;
+      margin: 6px;
+      width: 220px;
       text-align: center;
     }
     button {
-      padding: 12px 20px;
+      padding: 10px 16px;
       margin: 10px;
-      font-size: 1.2em;
+      font-size: 1.1em;
       border-radius: 10px;
       border: none;
       cursor: pointer;
@@ -40,11 +40,16 @@
     .startBtn:hover { background: #218838; }
     .toggleBtn { background: #007bff; color:white; }
     .toggleBtn:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin: 20px auto; }
-    th, td { border: 1px solid #555; padding: 10px; text-align: center; font-size: 1.1em; }
+    .game-wrapper {
+      overflow-x: auto;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    table { border-collapse: collapse; margin: 10px auto; min-width: 600px; }
+    th, td { border: 1px solid #555; padding: 6px; text-align: center; font-size: 0.95em; }
     th { background: #222; }
-    input.frameInput { width: 40px; font-size: 1.1em; text-align: center; }
-    .final-scores { margin-top: 30px; font-size: 1.3em; }
+    input.frameInput { width: 28px; font-size: 0.95em; text-align: center; }
+    .final-scores { margin-top: 20px; font-size: 1.2em; }
   </style>
 </head>
 <body>
@@ -60,7 +65,9 @@
     <button class="startBtn" id="startGameBtn" style="display:none;" onclick="startGame()">🚀 Start Game</button>
   </div>
 
-  <div class="game" id="game" style="display:none;"></div>
+  <div class="game-wrapper">
+    <div class="game" id="game" style="display:none;"></div>
+  </div>
 
   <script>
     const archetypes = [
@@ -78,80 +85,56 @@
       { name: "Amanda", handicap: 32, average: 164 }
     ];
 
-    let team1 = [];
-    let team2 = [];
+    let team1 = [], team2 = [];
 
     function createTeamSelectors() {
       const t1Count = parseInt(document.getElementById("team1Count").value);
       const t2Count = parseInt(document.getElementById("team2Count").value);
-      if (t1Count <1 || t1Count>5 || t2Count <1 || t2Count>5) {
+      if (t1Count<1 || t1Count>5 || t2Count<1 || t2Count>5){
         alert("Players per team must be between 1 and 5!");
         return;
       }
-      const container = document.getElementById("teamSelectors");
-      container.innerHTML = "<h3>🎳 Team 1 Players 🎳</h3>";
-      for (let i=0;i<t1Count;i++){
-        const sel = document.createElement("select");
-        sel.id = `team1_${i}`;
-        archetypes.forEach(a=>{
-          const opt = document.createElement("option");
-          opt.value=a.name;
-          opt.textContent=`${a.name} (Avg:${a.average}, Hcp:${a.handicap})`;
-          sel.appendChild(opt);
-        });
-        container.appendChild(sel);
-        container.appendChild(document.createElement("br"));
+      const container=document.getElementById("teamSelectors");
+      container.innerHTML="<h3>🎳 Team 1 Players 🎳</h3>";
+      for(let i=0;i<t1Count;i++){
+        const sel=document.createElement("select"); sel.id=`team1_${i}`;
+        archetypes.forEach(a=>{ const opt=document.createElement("option"); opt.value=a.name; opt.textContent=`${a.name} (Avg:${a.average}, Hcp:${a.handicap})`; sel.appendChild(opt);});
+        container.appendChild(sel); container.appendChild(document.createElement("br"));
       }
       container.innerHTML += "<h3>🎳 Team 2 Players 🎳</h3>";
-      for (let i=0;i<t2Count;i++){
-        const sel = document.createElement("select");
-        sel.id = `team2_${i}`;
-        archetypes.forEach(a=>{
-          const opt = document.createElement("option");
-          opt.value=a.name;
-          opt.textContent=`${a.name} (Avg:${a.average}, Hcp:${a.handicap})`;
-          sel.appendChild(opt);
-        });
-        container.appendChild(sel);
-        container.appendChild(document.createElement("br"));
+      for(let i=0;i<t2Count;i++){
+        const sel=document.createElement("select"); sel.id=`team2_${i}`;
+        archetypes.forEach(a=>{ const opt=document.createElement("option"); opt.value=a.name; opt.textContent=`${a.name} (Avg:${a.average}, Hcp:${a.handicap})`; sel.appendChild(opt);});
+        container.appendChild(sel); container.appendChild(document.createElement("br"));
       }
       document.getElementById("startGameBtn").style.display="inline-block";
     }
 
     function startGame() {
       team1=[]; team2=[];
-      const t1Count = parseInt(document.getElementById("team1Count").value);
-      const t2Count = parseInt(document.getElementById("team2Count").value);
+      const t1Count=parseInt(document.getElementById("team1Count").value);
+      const t2Count=parseInt(document.getElementById("team2Count").value);
       for(let i=0;i<t1Count;i++){
-        const name = document.getElementById(`team1_${i}`).value;
-        const archetype = archetypes.find(a=>a.name===name);
-        team1.push({name:archetype.name, average:archetype.average, handicap:archetype.handicap, frames:Array(10).fill(null).map(()=>[]), scores:Array(10).fill(null)});
+        const name=document.getElementById(`team1_${i}`).value;
+        const a=archetypes.find(a=>a.name===name);
+        team1.push({name:a.name,average:a.average,handicap:a.handicap,frames:Array(10).fill(null).map(()=>[]),scores:Array(10).fill(null)});
       }
       for(let i=0;i<t2Count;i++){
-        const name = document.getElementById(`team2_${i}`).value;
-        const archetype = archetypes.find(a=>a.name===name);
-        team2.push({name:archetype.name, average:archetype.average, handicap:archetype.handicap, frames:Array(10).fill(null).map(()=>[]), scores:Array(10).fill(null)});
+        const name=document.getElementById(`team2_${i}`).value;
+        const a=archetypes.find(a=>a.name===name);
+        team2.push({name:a.name,average:a.average,handicap:a.handicap,frames:Array(10).fill(null).map(()=>[]),scores:Array(10).fill(null)});
       }
       renderGame();
     }
 
-    function renderGame() {
-      const container = document.getElementById("game");
-      container.style.display="block";
-      let html="";
-      html += "<h2>🎉 Team 1 🎉</h2>";
-      html += generateTable(team1,"team1");
-      html += "<h2>🎉 Team 2 🎉</h2>";
-      html += generateTable(team2,"team2");
-      html += `<button onclick="calculateWinner()">🏆 Show Results 🏆</button>`;
-      html += `<div class="final-scores" id="finalScores"></div>`;
-      container.innerHTML=html;
+    function renderGame(){
+      const container=document.getElementById("game"); container.style.display="block";
+      container.innerHTML=`<h2>🎉 Team 1 🎉</h2>${generateTable(team1,"team1")}<h2>🎉 Team 2 🎉</h2>${generateTable(team2,"team2")}<button onclick="calculateWinner()">🏆 Show Results 🏆</button><div class="final-scores" id="finalScores"></div>`;
     }
 
-    function generateTable(team, prefix){
+    function generateTable(team,prefix){
       let html="<table><tr><th>Player</th>";
-      for(let f=1;f<=10;f++) html+=`<th>Frame ${f}</th>`;
-      html+="<th>Total</th></tr>";
+      for(let f=1;f<=10;f++) html+=`<th>Frame ${f}</th>`; html+="<th>Total</th></tr>";
       team.forEach((p,idx)=>{
         html+=`<tr><td>${p.name}</td>`;
         for(let f=0;f<10;f++){
@@ -164,41 +147,31 @@
         }
         html+=`<td id="${prefix}_${idx}_total"></td></tr>`;
       });
-      html+="</table>";
-      return html;
+      html+="</table>"; return html;
     }
 
-    function parseInput(val){
-      if(val==="X") return 10;
-      if(val==="/") return "/";
-      if(val==="-") return 0;
-      let n=parseInt(val); return isNaN(n)?null:n;
-    }
+    function parseInput(val){ if(val==="X") return 10; if(val==="/") return "/"; if(val==="-") return 0; let n=parseInt(val); return isNaN(n)?null:n; }
 
     function updateFrame(prefix,pIdx,fIdx){
-      const team=prefix==="team1"?team1:team2;
-      const player=team[pIdx];
-      const frameInputs=document.querySelectorAll(`#${prefix}_${pIdx}_f${fIdx} input`);
-      let rolls=[];
+      const team = prefix==="team1"?team1:team2; const player=team[pIdx];
+      const frameInputs=document.querySelectorAll(`#${prefix}_${pIdx}_f${fIdx} input`); let rolls=[];
       frameInputs.forEach(inp=>rolls.push(parseInput(inp.value)));
-      if(rolls.includes(null)){
-        document.getElementById(`${prefix}_${pIdx}_f${fIdx}score`).innerText="";
-        return;
-      }
-      player.frames[fIdx]=rolls;
-      calculateScores(prefix,pIdx);
+
+      let frameComplete=false;
+      if(fIdx<9){
+        if(rolls[0]===10) frameComplete=true;
+        else if(rolls[0]!==null && rolls[1]!==null) frameComplete=true;
+      }else{ frameComplete=rolls.every(r=>r!==null); }
+
+      if(!frameComplete){ document.getElementById(`${prefix}_${pIdx}_f${fIdx}score`).innerText=""; return; }
+
+      player.frames[fIdx]=rolls; calculateScores(prefix,pIdx);
     }
 
     function calculateScores(prefix,pIdx){
-      const team=prefix==="team1"?team1:team2;
-      const player=team[pIdx];
-      let total=0;
+      const team = prefix==="team1"?team1:team2; const player=team[pIdx]; let total=0;
       for(let f=0;f<10;f++){
-        const frame=player.frames[f];
-        if(frame.includes(null)) {
-          document.getElementById(`${prefix}_${pIdx}_f${f}score`).innerText="";
-          continue;
-        }
+        const frame=player.frames[f]; if(!frame || frame.includes(null)) continue;
         let frameScore=0;
         if(f<9){
           if(frame[0]===10) frameScore=10;
@@ -208,9 +181,7 @@
         total+=frameScore;
         document.getElementById(`${prefix}_${pIdx}_f${f}score`).innerText=frameScore;
       }
-      total+=player.handicap;
-      player.total=total;
-      document.getElementById(`${prefix}_${pIdx}_total`).innerText=total;
+      total+=player.handicap; player.total=total; document.getElementById(`${prefix}_${pIdx}_total`).innerText=total;
     }
 
     function calculateWinner(){

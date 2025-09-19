@@ -2,162 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bowling Party!!! (Web-App Companion)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
       background: #222;
       color: #fff;
       margin: 0;
       padding: 0;
-    }
-
-    .title-container {
-      margin-top: 20px;
-    }
-
-    .title-image {
-      max-width: 90%;
-      height: auto;
-    }
-
-    .logo-container {
       text-align: center;
-      margin: 30px 0;
     }
 
-    .logo-image {
-      max-width: 140px;
-      height: auto;
-      opacity: 0.9;
+    h1 {
+      margin: 10px 0;
     }
 
-    .controls {
-      margin: 20px;
-    }
-
-    select, button {
-      padding: 10px;
-      font-size: 18px;
-      margin: 5px;
-      border-radius: 8px;
-    }
-
-    .team-container {
+    .teams {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 20px 0;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
-    .scoreboard {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 20px auto;
-      max-width: 95%;
+    .team {
+      background: #333;
+      padding: 15px;
+      border-radius: 12px;
+      min-width: 300px;
     }
 
     .player {
-      margin: 20px 0;
-      border: 2px solid #555;
-      border-radius: 12px;
-      padding: 10px;
-      width: 100%;
-      background: #333;
+      margin-bottom: 20px;
     }
 
-    .player h3 {
-      margin-bottom: 10px;
+    select {
+      font-size: 1rem;
+      padding: 6px;
+      min-width: 220px;
+      text-align: center;
     }
 
-    /* ✅ Scrollable frames */
     .frames {
       display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-      flex-wrap: nowrap;
       overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch; /* smooth scrolling */
-      max-width: 95vw; /* fit nicely on mobile */
-      margin: 0 auto;
+      padding: 10px;
+      gap: 8px;
+      margin-bottom: 15px;
     }
 
     .frame {
-      border: 1px solid #777;
-      margin: 2px;
-      padding: 8px;
-      min-width: 55px;
       background: #444;
+      padding: 10px;
       border-radius: 8px;
-      font-size: 18px;
-      flex: 0 0 auto; /* prevent stretching */
+      min-width: 70px;
+      flex-shrink: 0;
     }
 
-    .inputs {
+    .throws {
       display: flex;
       justify-content: center;
-      margin-bottom: 5px;
+      gap: 4px;
     }
 
-    .inputs input {
-      width: 24px;
-      height: 24px;
+    .throws input {
+      width: 22px;
       text-align: center;
-      margin: 0 2px;
-      font-size: 18px;
+      font-size: 1rem;
+      padding: 4px;
       border-radius: 4px;
       border: none;
     }
 
     .score {
-      font-size: 20px;
+      margin-top: 6px;
+      font-size: 1rem;
       font-weight: bold;
-      color: #ffcc00;
-      visibility: hidden; /* hidden until frame completes */
+    }
+
+    .frame-label {
+      margin-top: 4px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #ffeb3b;
+    }
+
+    .total {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #ff9800;
+      color: #000;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffa733;
+    }
+
+    img {
+      max-width: 90%;
+      height: auto;
+    }
+
+    .logo {
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
   <!-- Title Image -->
-  <div class="title-container">
-    <img src="assets/bowling party.jpg" alt="Bowling Party!!!" class="title-image">
+  <div>
+    <img src="assets/bowling-party.jpg" alt="Bowling Party!!!">
   </div>
 
-  <div class="controls">
-    <h2>🎳 Team Setup 🎳</h2>
-    <p>Select up to 5 players per team.</p>
-    <div>
-      <label>Team 1 Players:</label>
-      <select id="team1Count">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-      </select>
+  <div class="teams">
+    <div class="team" id="team1">
+      <h2>🎳 Team 1</h2>
+      <div class="players"></div>
     </div>
-    <div>
-      <label>Team 2 Players:</label>
-      <select id="team2Count">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-      </select>
+    <div class="team" id="team2">
+      <h2>🎳 Team 2</h2>
+      <div class="players"></div>
     </div>
-    <button onclick="startGame()">Start Game 🚀</button>
   </div>
 
-  <div id="scoreboard" class="scoreboard"></div>
+  <button onclick="calculateWinner()">Calculate Winner</button>
+  <h2 id="winner"></h2>
 
   <!-- Bottom Logo -->
-  <div class="logo-container">
-    <img src="assets/SCG Logo.jpg" alt="SCG Logo" class="logo-image">
+  <div class="logo">
+    <img src="assets/scg-logo.jpg" alt="SCG Logo">
   </div>
 
   <script>
@@ -176,104 +160,123 @@
       { name: "Amanda", handicap: 32, average: 164 }
     ];
 
-    function startGame() {
-      const team1Count = parseInt(document.getElementById("team1Count").value);
-      const team2Count = parseInt(document.getElementById("team2Count").value);
-      const scoreboard = document.getElementById("scoreboard");
-      scoreboard.innerHTML = "";
+    function createPlayer(teamDiv, playerIndex) {
+      const playerDiv = document.createElement("div");
+      playerDiv.classList.add("player");
 
-      buildTeam(scoreboard, "Team 1", team1Count);
-      buildTeam(scoreboard, "Team 2", team2Count);
-    }
+      const select = document.createElement("select");
+      archetypes.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.name;
+        opt.textContent = `${a.name} (Avg ${a.average}, Hdc ${a.handicap})`;
+        select.appendChild(opt);
+      });
 
-    function buildTeam(scoreboard, teamName, playerCount) {
-      const teamContainer = document.createElement("div");
-      teamContainer.className = "team-container";
+      const framesDiv = document.createElement("div");
+      framesDiv.classList.add("frames");
 
-      const teamTitle = document.createElement("h2");
-      teamTitle.textContent = `🔥 ${teamName} 🔥`;
-      teamContainer.appendChild(teamTitle);
+      for (let i = 1; i <= 10; i++) {
+        const frameDiv = document.createElement("div");
+        frameDiv.classList.add("frame");
 
-      for (let i = 0; i < playerCount; i++) {
-        const player = document.createElement("div");
-        player.className = "player";
+        const throwsDiv = document.createElement("div");
+        throwsDiv.classList.add("throws");
 
-        const playerName = document.createElement("h3");
-        const select = document.createElement("select");
-        archetypes.forEach(arc => {
-          const option = document.createElement("option");
-          option.value = arc.name;
-          option.textContent = `${arc.name} (Avg: ${arc.average}, HCP: ${arc.handicap})`;
-          select.appendChild(option);
-        });
-        playerName.appendChild(select);
-        player.appendChild(playerName);
+        const input1 = document.createElement("input");
+        input1.maxLength = 1;
+        const input2 = document.createElement("input");
+        input2.maxLength = 1;
+        throwsDiv.appendChild(input1);
+        throwsDiv.appendChild(input2);
 
-        const frames = document.createElement("div");
-        frames.className = "frames";
-
-        for (let f = 1; f <= 10; f++) {
-          const frame = document.createElement("div");
-          frame.className = "frame";
-
-          const inputs = document.createElement("div");
-          inputs.className = "inputs";
-
-          const input1 = document.createElement("input");
-          const input2 = document.createElement("input");
-          input1.maxLength = 1;
-          input2.maxLength = 1;
-
-          inputs.appendChild(input1);
-          inputs.appendChild(input2);
-
-          if (f === 10) {
-            const input3 = document.createElement("input");
-            input3.maxLength = 1;
-            inputs.appendChild(input3);
-          }
-
-          frame.appendChild(inputs);
-
-          const score = document.createElement("div");
-          score.className = "score";
-          score.textContent = "0";
-          frame.appendChild(score);
-
-          [input1, input2].forEach(inp => {
-            inp.addEventListener("input", () => {
-              if (input1.value && input2.value) {
-                score.style.visibility = "visible";
-                score.textContent = calculateFrameScore(input1.value, input2.value);
-              }
-            });
-          });
-
-          frames.appendChild(frame);
+        if (i === 10) {
+          const input3 = document.createElement("input");
+          input3.maxLength = 1;
+          throwsDiv.appendChild(input3);
         }
 
-        player.appendChild(frames);
-        teamContainer.appendChild(player);
+        const scoreDiv = document.createElement("div");
+        scoreDiv.classList.add("score");
+
+        const labelDiv = document.createElement("div");
+        labelDiv.classList.add("frame-label");
+        labelDiv.textContent = `Frame ${i}`;
+
+        frameDiv.appendChild(throwsDiv);
+        frameDiv.appendChild(scoreDiv);
+        frameDiv.appendChild(labelDiv);
+
+        framesDiv.appendChild(frameDiv);
       }
 
-      scoreboard.appendChild(teamContainer);
+      const totalDiv = document.createElement("div");
+      totalDiv.classList.add("total");
+
+      playerDiv.appendChild(select);
+      playerDiv.appendChild(framesDiv);
+      playerDiv.appendChild(totalDiv);
+
+      teamDiv.querySelector(".players").appendChild(playerDiv);
     }
 
-    function calculateFrameScore(val1, val2) {
-      let score1 = convertInput(val1);
-      let score2 = convertInput(val2);
-
-      if (val1.toUpperCase() === "X") return 10;
-      if (val2 === "/") return 10;
-
-      return score1 + score2;
+    function setupTeams() {
+      for (let i = 0; i < 5; i++) {
+        createPlayer(document.getElementById("team1"), i);
+        createPlayer(document.getElementById("team2"), i);
+      }
     }
 
-    function convertInput(val) {
-      if (val === "-") return 0;
-      if (!isNaN(val) && val !== "") return parseInt(val);
-      return 0;
+    function calculateWinner() {
+      const teams = [document.querySelectorAll("#team1 .player"), document.querySelectorAll("#team2 .player")];
+      let totals = [0, 0];
+
+      teams.forEach((players, teamIndex) => {
+        players.forEach(player => {
+          const name = player.querySelector("select").value;
+          const archetype = archetypes.find(a => a.name === name);
+          let score = 0;
+
+          const frames = player.querySelectorAll(".frame");
+          frames.forEach(frame => {
+            const inputs = frame.querySelectorAll("input");
+            let throws = Array.from(inputs).map(i => i.value.toUpperCase());
+
+            let frameScore = 0;
+
+            if (throws[0] === "X") {
+              frameScore = 10;
+            } else {
+              let first = throws[0] === "-" ? 0 : parseInt(throws[0]) || 0;
+              let second = throws[1] === "-" ? 0 : parseInt(throws[1]) || 0;
+              if (throws[1] === "/") {
+                second = 10 - first;
+              }
+              frameScore = first + second;
+              if (throws[2]) {
+                frameScore += throws[2] === "X" ? 10 : (throws[2] === "-" ? 0 : parseInt(throws[2]) || 0);
+              }
+            }
+
+            score += frameScore;
+            frame.querySelector(".score").textContent = frameScore > 0 ? score : "";
+          });
+
+          score += archetype.handicap;
+          player.querySelector(".total").textContent = `Total: ${score}`;
+          totals[teamIndex] += score;
+        });
+      });
+
+      const winnerText = totals[0] > totals[1] 
+        ? `🎉 Team 1 Wins! (${totals[0]} vs ${totals[1]})`
+        : totals[1] > totals[0]
+          ? `🎉 Team 2 Wins! (${totals[1]} vs ${totals[0]})`
+          : `🤝 It's a Tie! (${totals[0]} - ${totals[1]})`;
+
+      document.getElementById("winner").textContent = winnerText;
     }
+
+    setupTeams();
   </script>
 </body>
 </html>

@@ -114,10 +114,17 @@
     }
 
     .score {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       color: #ffcc00;
-      visibility: hidden; /* hidden until frame completes */
+      visibility: hidden; /* hidden until frame completes and scorable */
+    }
+
+    .total {
+      margin-top: 10px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #ffcc00;
     }
   </style>
 </head>
@@ -137,7 +144,7 @@
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4">4</option>
-        <option value="5">5</option>
+        <option value="5" selected>5</option>
       </select>
     </div>
     <div>
@@ -147,7 +154,7 @@
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4">4</option>
-        <option value="5">5</option>
+        <option value="5" selected>5</option>
       </select>
     </div>
     <button onclick="startGame()">Start Game 🚀</button>
@@ -200,6 +207,7 @@
 
         const playerName = document.createElement("h3");
         const select = document.createElement("select");
+        // fill archetype options
         archetypes.forEach(arc => {
           const option = document.createElement("option");
           option.value = arc.name;
@@ -224,12 +232,18 @@
           input1.maxLength = 1;
           input2.maxLength = 1;
 
+          // auto-uppercase for convenience
+          [input1, input2].forEach(inp => {
+            inp.addEventListener('input', () => { inp.value = inp.value.toUpperCase(); });
+          });
+
           inputs.appendChild(input1);
           inputs.appendChild(input2);
 
           if (f === 10) {
             const input3 = document.createElement("input");
             input3.maxLength = 1;
+            input3.addEventListener('input', () => { input3.value = input3.value.toUpperCase(); });
             inputs.appendChild(input3);
           }
 
@@ -237,44 +251,189 @@
 
           const score = document.createElement("div");
           score.className = "score";
-          score.textContent = "0";
+          score.textContent = "";
+
           frame.appendChild(score);
 
-          [input1, input2].forEach(inp => {
-            inp.addEventListener("input", () => {
-              if (input1.value && input2.value) {
-                score.style.visibility = "visible";
-                score.textContent = calculateFrameScore(input1.value, input2.value);
-              }
-            });
-          });
+          // add static frame label under the score
+          const label = document.createElement("div");
+          label.className = "frame-label";
+          label.textContent = `Frame ${f}`;
+          frame.appendChild(label);
 
           frames.appendChild(frame);
         }
 
+        // total display at end of player's frames
+        const totalDiv = document.createElement("div");
+        totalDiv.className = "total";
+        totalDiv.textContent = "Total: 0";
+
         player.appendChild(frames);
+        player.appendChild(totalDiv);
+
+        // attach listeners (all inputs and the select) to recalc for this player
+        // inputs are in the frames node
+        player.querySelectorAll('input').forEach(inp => {
+          inp.addEventListener('input', () => updatePlayerScores(player));
+        });
+        select.addEventListener('change', () => updatePlayerScores(player));
+
         teamContainer.appendChild(player);
       }
 
       scoreboard.appendChild(teamContainer);
     }
 
-    function calculateFrameScore(val1, val2) {
-      let score1 = convertInput(val1);
-      let score2 = convertInput(val2);
-
-      if (val1.toUpperCase() === "X") return 10;
-      if (val2 === "/") return 10;
-
-      return score1 + score2;
+    // helper: convert a raw char to a number (spare handled by prev parameter)
+    function rawToNumber(raw, prev) {
+      if (raw == null) return null;
+      const s = ('' + raw).trim().toUpperCase();
+      if (s === '') return null;
+      if (s === 'X') return 10;
+      if (s === '-') return 0;
+      if (s === '/') {
+        if (prev == null) return null;
+        return 10 - prev;
+      }
+      const n = parseInt(s);
+      return isNaN(n) ? null : n;
     }
 
-    function convertInput(val) {
-      if (val === "-") return 0;
-      if (!isNaN(val) && val !== "") return parseInt(val);
-      return 0;
+    // Recalculate and display cumulative frame scores + total (including handicap)
+    function updatePlayerScores(player) {
+      const frames = Array.from(player.querySelectorAll('.frame'));
+      const rawPerFrame = [];           // store raw entries for each frame
+      const frameStartIndex = [];       // start index into rolls for each frame
+      const rolls = [];                 // flattened numeric rolls (only those present)
+      // Build rolls array and record starts
+      for (let f = 0; f < frames.length; f++) {
+        frameStartIndex[f] = rolls.length;
+        const inputs = frames[f].querySelectorAll('input');
+        const r1raw = inputs[0] ? inputs[0].value.trim().toUpperCase() : '';
+        const r2raw = inputs[1] ? inputs[1].value.trim().toUpperCase() : '';
+        const r3raw = inputs[2] ? inputs[2].value.trim().toUpperCase() : '';
+        rawPerFrame[f] = { r1raw, r2raw, r3raw };
+
+        if (f < 9) {
+          if (r1raw) {
+            if (r1raw === 'X') {
+              rolls.push(10);
+            } else {
+              const v1 = rawToNumber(r1raw, null);
+              if (v1 !== null) rolls.push(v1);
+              if (r2raw) {
+                const v2 = rawToNumber(r2raw, v1);
+                if (v2 !== null) rolls.push(v2);
+              }
+            }
+          }
+        } else { // 10th frame
+          if (r1raw) {
+            const v1 = rawToNumber(r1raw, null);
+            if (v1 !== null) rolls.push(v1);
+          }
+          if (r2raw) {
+            // previous for spare calculation should be last pushed roll (v1)
+            const prev = rolls.length > 0 ? rolls[rolls.length - 1] : null;
+            const v2 = rawToNumber(r2raw, prev);
+            if (v2 !== null) rolls.push(v2);
+          }
+          if (r3raw) {
+            const prev = rolls.length > 0 ? rolls[rolls.length - 1] : null;
+            const v3 = rawToNumber(r3raw, prev);
+            if (v3 !== null) rolls.push(v3);
+          }
+        }
+      }
+
+      // Now compute cumulative frame by frame
+      let cumulative = 0;
+      for (let f = 0; f < frames.length; f++) {
+        const { r1raw, r2raw, r3raw } = rawPerFrame[f];
+        const start = frameStartIndex[f];
+        const scoreDiv = frames[f].querySelector('.score');
+
+        // determine if this frame is "scorable" (we have required bonus rolls for strike/spare)
+        let scorable = false;
+        if (f < 9) {
+          if (!r1raw) {
+            scorable = false;
+          } else if (r1raw === 'X') {
+            // need two more rolls available after this strike in the rolls array
+            if (rolls.length >= start + 3) scorable = true;
+          } else {
+            if (!r2raw) {
+              scorable = false;
+            } else if (r2raw === '/') {
+              // spare needs one bonus roll after this frame
+              if (rolls.length >= start + 3) scorable = true;
+            } else {
+              // open frame: both rolls present => scorable
+              const v1 = rawToNumber(r1raw, null);
+              const v2 = rawToNumber(r2raw, v1);
+              if (v1 !== null && v2 !== null) scorable = true;
+            }
+          }
+        } else {
+          // 10th frame rules: need the required inputs to be present
+          if (!r1raw) scorable = false;
+          else if (r1raw === 'X') {
+            scorable = !!(r2raw && r3raw);
+          } else if (r2raw === '/') {
+            scorable = !!r3raw;
+          } else {
+            scorable = !!r2raw;
+          }
+        }
+
+        if (!scorable) {
+          scoreDiv.textContent = "";
+          scoreDiv.style.visibility = 'hidden';
+          continue;
+        }
+
+        // compute this frame's score (not just pins for the frame but applying bonuses)
+        let frameScore = 0;
+        if (f < 9) {
+          if (r1raw === 'X') {
+            const a = rolls[start] || 0;
+            const b = rolls[start + 1] || 0;
+            const c = rolls[start + 2] || 0;
+            frameScore = a + b + c;
+          } else if (r2raw === '/') {
+            const a = rolls[start] || 0;
+            const bonus = rolls[start + 2] || 0;
+            frameScore = 10 + bonus;
+          } else {
+            const a = rolls[start] || 0;
+            const b = rolls[start + 1] || 0;
+            frameScore = a + b;
+          }
+        } else {
+          // 10th frame sum of its rolls (we ensured the required ones exist)
+          const v1 = rawToNumber(r1raw, null) || 0;
+          const v2 = rawToNumber(r2raw, v1) || 0;
+          const v3 = rawToNumber(r3raw, v2) || 0;
+          frameScore = v1 + v2 + v3;
+        }
+
+        cumulative += frameScore;
+        scoreDiv.textContent = cumulative;
+        scoreDiv.style.visibility = 'visible';
+      }
+
+      // total includes handicap of selected archetype
+      const selName = player.querySelector('select').value;
+      const arch = archetypes.find(a => a.name === selName);
+      const handicap = arch ? arch.handicap : 0;
+      const totalWithHcp = cumulative + handicap;
+      const totalDiv = player.querySelector('.total');
+      totalDiv.textContent = `Total: ${totalWithHcp}`;
     }
+
+    // utility: start page with default filled players (optional)
+    // startGame(); // uncomment if you want the teams to render immediately on page load
   </script>
 </body>
 </html>
-

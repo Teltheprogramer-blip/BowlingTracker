@@ -174,7 +174,6 @@ function buildPlayer(container, label) {
         if (["X","/","-"].includes(inp.value.toUpperCase()) || !isNaN(inp.value)) {
           setActiveRoll(inp, frame);
           handleFrameInput(player);
-          // Auto-tab & skip strike
           const r1 = frame.input1.value.toUpperCase();
           if(inp===frame.input1 && r1==="X" && frame.input3===undefined){
             const nextFrame = player.frames[player.frames.indexOf(frame)+1];
@@ -207,12 +206,13 @@ function handleFrameInput(player){
   player.frames.forEach(frame=>{
     const r1=frame.input1.value.toUpperCase();
     const r2=frame.input2.value.toUpperCase();
-    const r3=(frame.input3)? frame.input3.value.toUpperCase() : null;
+    const r3=frame.input3 ? frame.input3.value.toUpperCase() : null;
     if(r1) rolls.push(r1); if(r2) rolls.push(r2); if(r3) rolls.push(r3);
   });
 
-  const frameScores = [];
+  const frameScores=[];
   let rollIndex=0;
+
   for(let f=0; f<10; f++){
     if(rollIndex>=rolls.length) break;
     let first=rolls[rollIndex], second=rolls[rollIndex+1], third=rolls[rollIndex+2];
@@ -220,21 +220,20 @@ function handleFrameInput(player){
     let frameScore=0;
 
     if(f<9){
-      if(first==="X"){ 
-        frameScore = 10 + convertRoll(rolls[rollIndex+1]) + convertRoll(rolls[rollIndex+2]); 
-        rollIndex += 1; 
-      } else if(second==="/"){ 
-        frameScore = 10; // ✅ Spare now counts as exactly 10 for the frame
-        rollIndex += 2; 
-      } else { 
-        frameScore = firstVal + secondVal; 
-        rollIndex += 2; 
+      if(first==="X"){
+        frameScore=10+convertRoll(rolls[rollIndex+1])+convertRoll(rolls[rollIndex+2]);
+        rollIndex+=1;
+      } else if(second==="/"){
+        frameScore=10+convertRoll(rolls[rollIndex+2]);
+        rollIndex+=2;
+      } else {
+        frameScore=firstVal+secondVal;
+        rollIndex+=2;
       }
-    } else { 
-      frameScore = firstVal + secondVal + thirdVal; 
-      rollIndex += (third?3:2); 
+    } else {
+      frameScore=firstVal+secondVal+thirdVal;
+      rollIndex+=(third?3:2);
     }
-
     frameScores.push(frameScore);
   }
 
@@ -254,27 +253,26 @@ function handleFrameInput(player){
     }
   });
 
-  const arc = JSON.parse(player.querySelector("select").value);
-  const totalRaw = frameScores.reduce((a,b)=>a+b,0);
+  const arc=JSON.parse(player.querySelector("select").value);
+  const totalRaw=frameScores.reduce((a,b)=>a+b,0);
   player.querySelector(".totals").textContent=`Raw Total: ${totalRaw} | Final Total: ${totalRaw+arc.handicap}`;
 
-  // Update team total if in team mode
-  const teamContainer = player.parentNode.classList.contains("team-container") ? player.parentNode : player.parentNode.parentNode;
+  const teamContainer=player.parentNode.classList.contains("team-container") ? player.parentNode : player.parentNode.parentNode;
   if(teamContainer && teamContainer.teamTotalDiv){
-    let teamTotal = 0;
+    let teamTotal=0;
     teamContainer.querySelectorAll(".player").forEach(p=>{
-      const arc = JSON.parse(p.querySelector("select").value);
-      const rawTotal = p.querySelector(".totals").textContent.match(/Raw Total: (\d+)/);
-      if(rawTotal) teamTotal += parseInt(rawTotal[1]) + arc.handicap;
+      const arc=JSON.parse(p.querySelector("select").value);
+      const rawTotal=p.querySelector(".totals").textContent.match(/Raw Total: (\d+)/);
+      if(rawTotal) teamTotal+=parseInt(rawTotal[1])+arc.handicap;
     });
-    teamContainer.teamTotalDiv.textContent = `Team Total: ${teamTotal}`;
+    teamContainer.teamTotalDiv.textContent=`Team Total: ${teamTotal}`;
   }
 }
 
 function convertRoll(val){
   if(!val) return 0;
   if(val==="X") return 10;
-  if(val==="/") return 0; // spare is handled separately in frame logic
+  if(val==="/") return 0;
   if(val==="-") return 0;
   if(!isNaN(val)) return parseInt(val);
   return 0;
@@ -291,7 +289,7 @@ function setActiveFrame(player,frameIndex){
   allPlayers.forEach(p=>p.frames.forEach(f=>{ f.classList.remove("active-frame"); f.querySelector(".active-indicator").textContent=""; }));
   const activeFrame=player.frames[frameIndex];
   activeFrame.classList.add("active-frame");
-  activeFrame.querySelector(".active-indicator").textContent="🎳";
+  activeFrame.querySelector(".active-indicator").textContent="➡";
 }
 </script>
 </body>

@@ -20,11 +20,10 @@ select, button { padding: 10px; font-size: 18px; margin: 5px; border-radius: 8px
 .frame { border: 1px solid #777; margin: 2px; padding: 8px; min-width: 55px; background: #444; border-radius: 8px; font-size: 18px; flex: 0 0 auto; position: relative; }
 .inputs { display: flex; justify-content: center; margin-bottom: 5px; }
 .inputs input { width: 24px; height: 24px; text-align: center; margin: 0 2px; font-size: 18px; border-radius: 4px; border: none; background: #fff; color: #000; }
-.score { font-size: 16px; font-weight: bold; color: #ffcc00; }
+.score { font-size: 16px; font-weight: bold; color: #ffcc00; visibility: hidden; }
 .frame-label { position: absolute; bottom: -20px; width: 100%; font-size: 14px; color: #aaa; }
 .active-frame { border: 2px solid #ffcc00; }
 .team-total { font-size: 22px; font-weight: bold; margin-top: 10px; color: #0f0; }
-.error-frame { border: 2px solid red; }
 </style>
 </head>
 <body>
@@ -159,15 +158,15 @@ function handleInput(frame,inp,index,frameIdx,player){
   const val=inp.value.toUpperCase();
   inp.value=val;
 
-  if(val==="X" && index===0 && frameIdx<9){ // first-roll strike
-    frame.input2.value=""; 
+  if(val==='X' && index===0 && frameIdx<9){
+    frame.input2.value=''; 
     moveToNextFrame(player,frameIdx);
   } else {
-    const inputs=frame.querySelectorAll("input");
+    const inputs=frame.querySelectorAll('input');
     if(index<inputs.length-1) inputs[index+1].focus();
   }
 
-  updateScores(player);
+  calculateAndDisplayScores(player);
 }
 
 function moveToNextFrame(player,currentFrame){
@@ -177,83 +176,68 @@ function moveToNextFrame(player,currentFrame){
   if(nextInput) nextInput.focus();
 }
 
-function convertRoll(val){
-  if(val==="-") return 0;
-  if(!isNaN(val) && val!=="") return parseInt(val);
-  if(val.toUpperCase()==="X") return 10;
+function convertRoll(val,firstVal=0){
+  if(!val) return 0;
+  val=val.toUpperCase();
+  if(val==='X') return 10;
+  if(val==='/') return 10-firstVal;
+  if(val==='-') return 0;
+  if(!isNaN(val)) return parseInt(val);
   return 0;
 }
 
 function nextValidRoll(rolls,start){
   for(let i=start;i<rolls.length;i++){
-    if(rolls[i]!=="") return convertRoll(rolls[i]);
+    if(rolls[i]!=='') return convertRoll(rolls[i]);
   }
-  return null;
+  return 0;
 }
 
-function calculateFrameScores(player){
+function calculateAndDisplayScores(player){
   const rolls=[];
   player.frames.forEach(f=>{
     [f.input1,f.input2,f.input3].forEach(inp=>{
-      if(inp && inp.value!=="") rolls.push(inp.value.toUpperCase());
+      if(inp && inp.value!=='') rolls.push(inp.value.toUpperCase());
     });
   });
 
-  const frameScores=[];
+  let runningTotal=0;
   let rollIndex=0;
 
-  for(let f=0;f<10;f++){
-    if(rollIndex>=rolls.length) break;
+  player.frames.forEach((f,frameIdx)=>{
+    if(rollIndex>=rolls.length) return;
     const first=rolls[rollIndex];
     const second=rolls[rollIndex+1];
     const third=rolls[rollIndex+2];
 
-    let frameScore=null;
     const firstVal=convertRoll(first);
-    const secondVal=second==="/"? 10-firstVal : convertRoll(second);
+    const secondVal=second==='/'? 10-firstVal : convertRoll(second);
     const thirdVal=convertRoll(third);
 
-    if(f<9){
-      if(first==="X"){ 
-        const bonus1=nextValidRoll(rolls,rollIndex+1);
-        const bonus2=nextValidRoll(rolls,rollIndex+2);
-        if(bonus1!==null && bonus2!==null) frameScore=10+bonus1+bonus2;
+    let frameScore=null;
+
+    if(frameIdx<9){
+      if(first==='X'){
+        frameScore=10+nextValidRoll(rolls,rollIndex+1)+nextValidRoll(rolls,rollIndex+2);
         rollIndex+=1;
-      } else if(second==="/"){
-        const bonus=nextValidRoll(rolls,rollIndex+2);
-        if(bonus!==null) frameScore=10+bonus;
+      } else if(second==='/'){
+        frameScore=10+nextValidRoll(rolls,rollIndex+2);
         rollIndex+=2;
       } else if(first && second){
         frameScore=firstVal+secondVal;
         rollIndex+=2;
-      }
+      } else return;
     } else {
       if(first && second){
         frameScore=firstVal+secondVal+(third?thirdVal:0);
         rollIndex+=(third?3:2);
-      }
+      } else return;
     }
-    frameScores.push(frameScore);
-  }
-  return frameScores;
-}
 
-function updateScores(player){
-  const frameScores=calculateFrameScores(player);
-  let runningTotal=0;
-  player.frames.forEach((f,i)=>{
-    const firstVal=f.input1?convertRoll(f.input1.value):0;
-    const secondVal=f.input2? (f.input2.value==="/"? 10-firstVal : convertRoll(f.input2.value)) :0;
-    const thirdVal=f.input3?convertRoll(f.input3.value):0;
-    let rawScore=firstVal+secondVal+thirdVal;
-
-    if(frameScores[i]!==null && frameScores[i]!==undefined){
-      runningTotal+=frameScores[i];
-      f.querySelector(".score").textContent=`${rawScore} | Total: ${runningTotal}`;
-      f.querySelector(".score").style.visibility="visible";
-    } else {
-      f.querySelector(".score").textContent="";
-      f.querySelector(".score").style.visibility="hidden";
+    if(frameScore!==null){
+      runningTotal+=frameScore;
+      f.querySelector('.score').textContent=`${frameScore} | Total: ${runningTotal}`;
+      f.querySelector('.score').style.visibility='visible';
     }
   });
 }
@@ -267,8 +251,15 @@ function buildTeamTotal(scoreboard){
   teams.forEach(team=>{
     let total=0;
     team.querySelectorAll(".player").forEach(player=>{
-      const fs=calculateFrameScores(player);
-      total+=fs.reduce((a,b)=>a+b,0);
+      const fs=[];
+      player.frames.forEach(f=>{
+        const scoreText=f.querySelector(".score").textContent;
+        if(scoreText){
+          const parts=scoreText.split("|");
+          const val=parseInt(parts[1]);
+          if(!isNaN(val)) total+=0; // total already cumulative in display
+        }
+      });
     });
     const tdiv=document.createElement("div");
     tdiv.textContent=`${team.querySelector("h2").textContent} Total: ${total}`;
@@ -277,6 +268,5 @@ function buildTeamTotal(scoreboard){
   scoreboard.appendChild(teamTotals);
 }
 </script>
-
 </body>
 </html>

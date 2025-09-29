@@ -100,7 +100,7 @@ function startGame() {
   const isSingle = document.getElementById("singlePlayerSelect").value==="1";
   const scoreboard = document.getElementById("scoreboard");
   scoreboard.innerHTML = "";
-  
+
   if(isSingle){
     buildTeam(scoreboard,"Single Player",1,true);
     document.getElementById("teamSelects").style.display="none";
@@ -110,7 +110,7 @@ function startGame() {
     const team2Count = parseInt(document.getElementById("team2Count").value);
     buildTeam(scoreboard, "Team 1", team1Count);
     buildTeam(scoreboard, "Team 2", team2Count);
-    buildTeamTotal(scoreboard); // placeholder for total scores
+    buildTeamTotal(scoreboard);
   }
 }
 
@@ -138,7 +138,6 @@ function buildTeam(scoreboard, teamName, playerCount, single=false) {
 
     const frames = document.createElement("div");
     frames.className="frames";
-
     player.frames=[];
 
     for(let f=1;f<=10;f++){
@@ -173,18 +172,13 @@ function buildTeam(scoreboard, teamName, playerCount, single=false) {
       label.textContent=`Frame ${f}`;
       frame.appendChild(label);
 
-      // store inputs in player.frames
       frame.input1=input1; frame.input2=input2;
       player.frames.push(frame);
 
-      // add input event listeners
       [input1,input2,frame.input3].forEach(inp=>{
         if(inp){
           inp.addEventListener("input",()=>{
-            // auto-tab to next input
-            if(inp.value.toUpperCase()==="X" || inp.value==="/" || inp.value==="-"){
-              moveToNextInput(player,f-1,inp);
-            }
+            handleInputTab(player, frame, inp);
             updateScores(player);
           });
         }
@@ -200,35 +194,42 @@ function buildTeam(scoreboard, teamName, playerCount, single=false) {
   scoreboard.appendChild(teamContainer);
 }
 
-function moveToNextInput(player, frameIndex, currentInput){
-  const frame=player.frames[frameIndex];
-  if(currentInput===frame.input1 && frame.input2){
-    frame.input2.focus();
-  } else if(currentInput===frame.input2){
+function handleInputTab(player, frame, inp){
+  const val = inp.value.toUpperCase();
+  // Strike on first input jumps to next frame
+  if(val==="X" && inp===frame.input1 && frame.input3===undefined){
+    const nextFrame = player.frames[frame.dataset.index+1];
+    if(nextFrame) nextFrame.input1.focus();
+    return;
+  }
+  // Normal auto-tab
+  if(inp===frame.input1 && frame.input2) frame.input2.focus();
+  else if(inp===frame.input2){
     if(frame.input3) frame.input3.focus();
-    else{
-      // move to next frame's first input
-      if(player.frames[frameIndex+1]) player.frames[frameIndex+1].input1.focus();
+    else {
+      const nextFrame = player.frames[frame.dataset.index+1];
+      if(nextFrame) nextFrame.input1.focus();
     }
-  } else if(currentInput===frame.input3){
-    if(player.frames[frameIndex+1]) player.frames[frameIndex+1].input1.focus();
+  } else if(inp===frame.input3){
+    const nextFrame = player.frames[frame.dataset.index+1];
+    if(nextFrame) nextFrame.input1.focus();
   }
 }
 
 function updateScores(player){
   const frameScores = calculateFrameScores(player);
   let runningTotal=0;
-  for(let f=0;f<player.frames.length;f++){
-    const scoreDiv = player.frames[f].querySelector(".score");
-    if(frameScores[f]!==undefined){
+  player.frames.forEach((f,idx)=>{
+    const scoreDiv = f.querySelector(".score");
+    if(frameScores[idx]!==undefined){
       scoreDiv.style.visibility="visible";
-      runningTotal+=frameScores[f];
+      runningTotal+=frameScores[idx];
       scoreDiv.textContent=runningTotal;
     }
-  }
+  });
 }
 
-function calculateFrameScores(player) {
+function calculateFrameScores(player){
   const rolls=[];
   player.frames.forEach(f=>{
     [f.input1,f.input2,f.input3].forEach(inp=>{
@@ -247,24 +248,19 @@ function calculateFrameScores(player) {
 
     const firstVal=convertRoll(first);
     let secondVal=0;
-
-    if(second==="/"){
-      secondVal=10-firstVal;
-    } else {
-      secondVal=convertRoll(second);
-    }
-
+    if(second==="/") secondVal=10-firstVal;
+    else secondVal=convertRoll(second);
     const thirdVal=convertRoll(third);
 
     let frameScore=0;
 
     if(f<9){
-      if(first==="X"){
+      if(first==="X"){ // Strike
         const bonus1=nextValidRoll(rolls,rollIndex+1);
         const bonus2=nextValidRoll(rolls,rollIndex+2);
         frameScore=10+bonus1+bonus2;
         rollIndex+=1;
-      } else if(second==="/"){
+      } else if(second==="/"){ // Spare
         const bonus=nextValidRoll(rolls,rollIndex+2);
         frameScore=10+bonus;
         rollIndex+=2;
@@ -288,7 +284,10 @@ function nextValidRoll(rolls,start){
     const val=rolls[i];
     if(val && val!==""){
       if(val==="X") return 10;
-      if(val==="/") return 10;
+      if(val==="/") {
+        const prevVal=convertRoll(rolls[i-1]);
+        return 10-prevVal;
+      }
       if(val==="-") return 0;
       if(!isNaN(val)) return parseInt(val);
     }
@@ -304,12 +303,22 @@ function convertRoll(val){
   return 0;
 }
 
-// optional: team total display placeholder
+// Placeholder for team totals
 function buildTeamTotal(scoreboard){
-  const totals = document.createElement("div");
-  totals.className="team-total";
-  totals.textContent="Team totals will be calculated here";
-  scoreboard.appendChild(totals);
+  const teams=scoreboard.querySelectorAll(".team-container");
+  teams.forEach(team=>{
+    let total=0;
+    const players=team.querySelectorAll(".player");
+    players.forEach(p=>{
+      const lastFrame=p.frames[9];
+      const frameScore=lastFrame.querySelector(".score").textContent;
+      total+=parseInt(frameScore)||0;
+    });
+    const teamTotal=document.createElement("div");
+    teamTotal.className="team-total";
+    teamTotal.textContent=`${team.querySelector("h2").textContent} Total: ${total}`;
+    team.appendChild(teamTotal);
+  });
 }
 </script>
 </body>

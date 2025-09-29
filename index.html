@@ -5,14 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bowling Party!!! (Web-App Companion)</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #222;
-  color: #fff;
-  margin: 0;
-  padding: 0;
-}
+body { font-family: Arial, sans-serif; text-align: center; background: #222; color: #fff; margin: 0; padding: 0; }
 .title-container { margin-top: 20px; }
 .title-image { max-width: 90%; height: auto; }
 .logo-container { text-align: center; margin: 30px 0; }
@@ -40,12 +33,9 @@ select, button { padding: 10px; font-size: 18px; margin: 5px; border-radius: 8px
 </div>
 
 <div class="controls">
-  <h2>🎳 Team Setup 🎳</h2>
-  <p>Select up to 5 players per team or single player mode.</p>
-  <div>
-    <button onclick="startSinglePlayer()">Single Player 🕹️</button>
-    <button onclick="startTeamGame()">Team Mode 👥</button>
-  </div>
+  <h2>🎳 Mode Selection 🎳</h2>
+  <button onclick="startSinglePlayer()">Single Player 🕹️</button>
+  <button onclick="startTeamGame()">Team Mode 👥</button>
 </div>
 
 <div id="scoreboard" class="scoreboard"></div>
@@ -77,12 +67,16 @@ function startSinglePlayer(){
 }
 
 function startTeamGame(){
-  const team1Count=prompt("How many players on Team 1? (1-5)", "2");
-  const team2Count=prompt("How many players on Team 2? (1-5)", "2");
+  let team1Count=parseInt(prompt("How many players on Team 1? (1-5)","2"));
+  let team2Count=parseInt(prompt("How many players on Team 2? (1-5)","2"));
+  if(isNaN(team1Count) || team1Count<1) team1Count=1;
+  if(team1Count>5) team1Count=5;
+  if(isNaN(team2Count) || team2Count<1) team2Count=1;
+  if(team2Count>5) team2Count=5;
   const scoreboard=document.getElementById("scoreboard");
   scoreboard.innerHTML="";
-  buildTeam(scoreboard,"Team 1",parseInt(team1Count));
-  buildTeam(scoreboard,"Team 2",parseInt(team2Count));
+  buildTeam(scoreboard,"Team 1",team1Count);
+  buildTeam(scoreboard,"Team 2",team2Count);
   buildTeamTotal(scoreboard);
 }
 
@@ -96,6 +90,8 @@ function buildTeam(scoreboard,teamName,playerCount,single=false){
   for(let i=0;i<playerCount;i++){
     const player=document.createElement("div");
     player.className="player";
+    player.frames=[];
+
     const playerName=document.createElement("h3");
     const select=document.createElement("select");
     archetypes.forEach(arc=>{
@@ -109,23 +105,26 @@ function buildTeam(scoreboard,teamName,playerCount,single=false){
 
     const frames=document.createElement("div");
     frames.className="frames";
-    player.frames=[];
 
     for(let f=1;f<=10;f++){
       const frame=document.createElement("div");
       frame.className="frame";
+
       const inputs=document.createElement("div");
       inputs.className="inputs";
 
       const input1=document.createElement("input");
       const input2=document.createElement("input");
       input1.maxLength=1; input2.maxLength=1;
+      frame.input1=input1; frame.input2=input2;
       inputs.appendChild(input1); inputs.appendChild(input2);
 
       if(f===10){
-        const input3=document.createElement("input"); input3.maxLength=1;
+        const input3=document.createElement("input");
+        input3.maxLength=1;
+        frame.input3=input3;
         inputs.appendChild(input3);
-      }
+      } else frame.input3=null;
 
       frame.appendChild(inputs);
 
@@ -142,19 +141,17 @@ function buildTeam(scoreboard,teamName,playerCount,single=false){
       player.frames.push(frame);
       frames.appendChild(frame);
 
-      // Input event
-      [input1,input2,input3].forEach((inp,index)=>{
+      // Input event listeners
+      [input1,input2,frame.input3].forEach((inp,index)=>{
         if(!inp) return;
         inp.addEventListener("input",()=>{
-          // Auto-tab logic
-          if(inp.value.toUpperCase()==="X" && index===0 && f<10){
-            input1.value="X"; input2.value="";
+          const val=inp.value.toUpperCase();
+          if(val==="X" && index===0 && f<10){
+            inp.value="X"; frame.input2.value="";
             moveToNextFrame(player,f);
-          } else if(inp.value==="/" && index===1){
-            // do nothing special
-          } else if(inp.value==="" && index<2){
-            return;
-          } else if(index===0 || index===1){
+          } else if(val==="/" && index===1){
+            // nothing special, calculation will handle it
+          } else if(val!=="" && index<2){
             autoTab(frame,inp,index);
           }
           updateScores(player);
@@ -169,13 +166,11 @@ function buildTeam(scoreboard,teamName,playerCount,single=false){
   scoreboard.appendChild(teamContainer);
 }
 
-// Auto-tab helper
 function autoTab(frame,inp,index){
   const inputs=frame.querySelectorAll("input");
   if(index<inputs.length-1) inputs[index+1].focus();
 }
 
-// Move to next frame after strike
 function moveToNextFrame(player,currentFrame){
   if(currentFrame>=player.frames.length-1) return;
   const nextFrame=player.frames[currentFrame+1];
@@ -183,7 +178,6 @@ function moveToNextFrame(player,currentFrame){
   if(nextInput) nextInput.focus();
 }
 
-// Convert roll input to numeric
 function convertRoll(val){
   if(val==="-") return 0;
   if(!isNaN(val) && val!=="") return parseInt(val);
@@ -191,7 +185,6 @@ function convertRoll(val){
   return 0;
 }
 
-// Find next valid roll for scoring
 function nextValidRoll(rolls,start){
   for(let i=start;i<rolls.length;i++){
     if(rolls[i]!=="") return convertRoll(rolls[i]);
@@ -199,7 +192,6 @@ function nextValidRoll(rolls,start){
   return 0;
 }
 
-// Calculate frame scores
 function calculateFrameScores(player){
   const rolls=[];
   player.frames.forEach(f=>{
@@ -215,8 +207,9 @@ function calculateFrameScores(player){
     let first=rolls[rollIndex];
     let second=rolls[rollIndex+1];
     let third=rolls[rollIndex+2];
+
     const firstVal=convertRoll(first);
-    let secondVal=(second==="/"? 10-firstVal : convertRoll(second));
+    const secondVal=(second==="/"? 10-firstVal : convertRoll(second));
     const thirdVal=convertRoll(third);
     let frameScore=0;
 
@@ -234,57 +227,43 @@ function calculateFrameScores(player){
         frameScore=firstVal+secondVal;
         rollIndex+=2;
       }
-    } else { // 10th frame
-      if(second==="/"){
-        frameScore=10+thirdVal;
-        rollIndex+=3;
-      } else if(first==="X"){
-        frameScore=firstVal+secondVal+thirdVal;
-        rollIndex+=3;
-      } else {
-        frameScore=firstVal+secondVal;
-        rollIndex+=2;
-      }
+    } else {
+      frameScore=firstVal+secondVal+(third?thirdVal:0);
+      rollIndex+=(third?3:2);
     }
-
     frameScores.push(frameScore);
   }
   return frameScores;
 }
 
-// Update running totals live
 function updateScores(player){
   const frameScores=calculateFrameScores(player);
   let runningTotal=0;
-  player.frames.forEach((f,idx)=>{
-    const scoreDiv=f.querySelector(".score");
-    if(frameScores[idx]!==undefined){
-      scoreDiv.style.visibility="visible";
-      runningTotal+=frameScores[idx];
-      scoreDiv.textContent=runningTotal;
-    } else {
-      scoreDiv.style.visibility="hidden";
-      scoreDiv.textContent="0";
+  player.frames.forEach((f,i)=>{
+    if(frameScores[i]!==undefined){
+      f.querySelector(".score").style.visibility="visible";
+      runningTotal+=frameScores[i];
+      f.querySelector(".score").textContent=runningTotal;
     }
   });
 }
 
-// Team total display
 function buildTeamTotal(scoreboard){
+  const teamTotals=document.createElement("div");
+  teamTotals.className="team-total";
+
   const teams=scoreboard.querySelectorAll(".team-container");
   teams.forEach(team=>{
     let total=0;
-    const players=team.querySelectorAll(".player");
-    players.forEach(p=>{
-      const lastFrame=p.frames[9];
-      const frameScore=lastFrame.querySelector(".score").textContent;
-      total+=parseInt(frameScore)||0;
+    team.querySelectorAll(".player").forEach(player=>{
+      const fs=calculateFrameScores(player);
+      total+=fs.reduce((a,b)=>a+b,0);
     });
-    const teamTotal=document.createElement("div");
-    teamTotal.className="team-total";
-    teamTotal.textContent=`${team.querySelector("h2").textContent} Total: ${total}`;
-    team.appendChild(teamTotal);
+    const tdiv=document.createElement("div");
+    tdiv.textContent=`${team.querySelector("h2").textContent} Total: ${total}`;
+    teamTotals.appendChild(tdiv);
   });
+  scoreboard.appendChild(teamTotals);
 }
 </script>
 </body>

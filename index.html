@@ -1,313 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bowling Party!!! (Web-App Companion)</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background: #222;
-    color: #fff;
-    margin: 0;
-    padding: 0;
-  }
-
-  .title-container { margin-top: 20px; }
-  .title-image { max-width: 90%; height: auto; }
-
-  .logo-container { text-align: center; margin: 30px 0; }
-  .logo-image { max-width: 140px; height: auto; opacity: 0.9; }
-
-  .controls { margin: 20px; }
-  select, button { padding: 10px; font-size: 18px; margin: 5px; border-radius: 8px; }
-
-  .team-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 20px 0;
-  }
-
-  .scoreboard { display: flex; flex-direction: column; align-items: center; margin: 20px auto; max-width: 95%; }
-
-  .player {
-    margin: 20px 0;
-    border: 2px solid #555;
-    border-radius: 12px;
-    padding: 10px;
-    width: 100%;
-    background: #333;
-  }
-
-  .player h3 { margin-bottom: 10px; }
-
-  .frames {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    max-width: 95vw;
-    margin: 0 auto;
-  }
-
-  .frame {
-    border: 1px solid #777;
-    margin: 2px;
-    padding: 8px;
-    min-width: 55px;
-    background: #444;
-    border-radius: 8px;
-    font-size: 18px;
-    flex: 0 0 auto;
-    position: relative;
-  }
-
-  .inputs { display: flex; justify-content: center; margin-bottom: 5px; }
-  .inputs input {
-    width: 24px; height: 24px; text-align: center; margin: 0 2px;
-    font-size: 18px; border-radius: 4px; border: none; background: #222; color: #fff;
-  }
-
-  .score {
-    font-size: 20px; font-weight: bold; color: #ffcc00; visibility: hidden;
-  }
-
-  .active-indicator {
-    position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
-    font-size: 16px; color: #ff4444;
-  }
-
-  .totals { margin-top: 10px; font-weight: bold; color: #00ffcc; }
-  .team-total { font-size: 20px; margin-top: 10px; color: #ff66ff; }
-</style>
-</head>
-<body>
-
-<div class="title-container">
-  <img src="assets/bowling party.jpg" alt="Bowling Party!!!" class="title-image">
-</div>
-
-<div class="controls">
-  <h2>🎳 Game Mode 🎳</h2>
-  <button onclick="startSinglePlayer()">Single Player</button>
-  <button onclick="startTeamMode()">Team Mode</button>
-</div>
-
-<div id="scoreboard" class="scoreboard"></div>
-
-<div class="logo-container">
-  <img src="assets/SCG Logo.jpg" alt="SCG Logo" class="logo-image">
-</div>
-
-<script>
-const archetypes = [
-  { name: "Tilly", handicap: 39, average: 166 },
-  { name: "Debbie", handicap: 71, average: 121 },
-  { name: "Robert", handicap: -59, average: 279 },
-  { name: "Samuel", handicap: 19, average: 188 },
-  { name: "Peyton", handicap: -27, average: 241 },
-  { name: "Amara", handicap: -40, average: 255 },
-  { name: "Tito", handicap: 27, average: 180 },
-  { name: "Wendy", handicap: -46, average: 262 },
-  { name: "David", handicap: 32, average: 174 },
-  { name: "Marcus", handicap: 49, average: 156 },
-  { name: "Jacob", handicap: 58, average: 145 },
-  { name: "Amanda", handicap: 32, average: 164 }
-];
-
-// ----- Game Setup -----
-function startSinglePlayer() {
-  const scoreboard = document.getElementById("scoreboard");
-  scoreboard.innerHTML = "";
-  buildPlayers(scoreboard, "Player", 1);
-}
-
-function startTeamMode() {
-  const scoreboard = document.getElementById("scoreboard");
-  scoreboard.innerHTML = "";
-
-  const controlsHTML = `
-    <p>Select up to 5 players per team:</p>
-    Team 1: <select id="team1Count">${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join('')}</select>
-    Team 2: <select id="team2Count">${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join('')}</select>
-    <button onclick="buildTeams()">Confirm Teams</button>
-  `;
-  scoreboard.innerHTML = controlsHTML;
-}
-
-function buildTeams() {
-  const scoreboard = document.getElementById("scoreboard");
-  const t1 = parseInt(document.getElementById("team1Count").value);
-  const t2 = parseInt(document.getElementById("team2Count").value);
-  scoreboard.innerHTML = "";
-  buildPlayers(scoreboard, "Team 1 Player", t1, true);
-  buildPlayers(scoreboard, "Team 2 Player", t2, true);
-}
-
-// ----- Player & Frames -----
-function buildPlayers(container, prefix, count, teamMode=false){
-  for(let i=0;i<count;i++){
-    const playerDiv=document.createElement("div");
-    playerDiv.className="player";
-
-    // Name selector
-    const h3=document.createElement("h3");
-    const sel=document.createElement("select");
-    archetypes.forEach(a=>{
-      const opt=document.createElement("option");
-      opt.value=JSON.stringify(a);
-      opt.textContent=`${a.name} (Avg: ${a.average}, HCP: ${a.handicap})`;
-      sel.appendChild(opt);
-    });
-    h3.textContent=`${prefix} ${i+1}: `;
-    h3.appendChild(sel);
-    playerDiv.appendChild(h3);
-
-    // Frames
-    const framesDiv=document.createElement("div");
-    framesDiv.className="frames";
-
-    playerDiv.frames=[];
-    for(let f=0;f<10;f++){
-      const frameDiv=document.createElement("div");
-      frameDiv.className="frame";
-
-      const inputsDiv=document.createElement("div"); inputsDiv.className="inputs";
-      const input1=document.createElement("input"); const input2=document.createElement("input");
-      input1.maxLength=1; input2.maxLength=1; inputsDiv.appendChild(input1); inputsDiv.appendChild(input2);
-      if(f===9){ const input3=document.createElement("input"); input3.maxLength=1; inputsDiv.appendChild(input3);}
-      frameDiv.appendChild(inputsDiv);
-
-      const scoreDiv=document.createElement("div"); scoreDiv.className="score"; scoreDiv.textContent="0";
-      frameDiv.appendChild(scoreDiv);
-
-      const indicator=document.createElement("div"); indicator.className="active-indicator"; frameDiv.appendChild(indicator);
-
-      framesDiv.appendChild(frameDiv);
-      playerDiv.frames.push({frameDiv,input1,input2,input3:frameDiv.querySelector("input:nth-child(3)"),scoreDiv});
-    }
-
-    playerDiv.appendChild(framesDiv);
-
-    const totals=document.createElement("div"); totals.className="totals"; totals.textContent="Raw Total: 0 | Final Total: 0";
-    playerDiv.appendChild(totals);
-
-    container.appendChild(playerDiv);
-
-    // Input listeners
-    playerDiv.frames.forEach((frameObj,fIndex)=>{
-      [frameObj.input1,frameObj.input2,frameObj.input3].forEach(inp=>{
-        if(!inp) return;
-        inp.addEventListener("input",()=>{
-          const val=inp.value.toUpperCase();
-          if(val==="X" || val==="/" || val==="-"){inp.value=val;}
-          handleFrameInput(playerDiv);
-          autoTab(frameObj,inp);
-          highlightActiveFrame(playerDiv,fIndex);
-        });
-      });
-    });
-  }
-
-  if(teamMode){
-    const teamTotalDiv=document.createElement("div"); teamTotalDiv.className="team-total"; teamTotalDiv.textContent="Team Total: 0";
-    container.appendChild(teamTotalDiv);
-    container.teamTotalDiv=teamTotalDiv;
-  }
-}
-
-// ----- Scoring -----
-function handleFrameInput(player){
-  const frameScores=calculateFrameScores(player);
-
-  let cumScore=0;
-  player.frames.forEach((fObj,i)=>{
-    if(frameScores[i]!==undefined){
-      cumScore+=frameScores[i];
-      fObj.scoreDiv.textContent=cumScore; fObj.scoreDiv.style.visibility="visible";
-    }
-  });
-
-  const arc=JSON.parse(player.querySelector("select").value);
-  const rawTotal=frameScores.reduce((a,b)=>a+b,0);
-  player.querySelector(".totals").textContent=`Raw Total: ${rawTotal} | Final Total: ${rawTotal+arc.handicap}`;
-
-  // Team totals
-  const teamContainer=player.parentNode.classList.contains("team-container")?player.parentNode:player.parentNode.parentNode;
-  if(teamContainer && teamContainer.teamTotalDiv){
-    let teamTotal=0;
-    teamContainer.querySelectorAll(".player").forEach(p=>{
-      const arc=JSON.parse(p.querySelector("select").value);
-      const raw=p.querySelector(".totals").textContent.match(/Raw Total: (\d+)/);
-      if(raw) teamTotal+=parseInt(raw[1])+arc.handicap;
-    });
-    teamContainer.teamTotalDiv.textContent=`Team Total: ${teamTotal}`;
-  }
-}
-
-// ----- Calculate Frames -----
 function calculateFrameScores(player){
   const rolls=[];
   player.frames.forEach(f=>{
-    [f.input1,f.input2,f.input3].forEach(inp=>{if(inp&&inp.value!=="") rolls.push(inp.value.toUpperCase());});
+    [f.input1,f.input2,f.input3].forEach(inp=>{
+      if(inp && inp.value!=="") rolls.push(inp.value.toUpperCase());
+    });
   });
 
-  const frameScores=[]; let rollIndex=0;
-  for(let f=0;f<10;f++){
-    if(rollIndex>=rolls.length) break;
-    let first=rolls[rollIndex]; let second=rolls[rollIndex+1]; let third=rolls[rollIndex+2];
-    const firstVal=convertRoll(first);
-    let secondVal=second==="/" ? 10-firstVal : convertRoll(second);
-    const thirdVal=convertRoll(third);
+  const frameScores=[];
+  let rollIndex=0;
 
-    // Validation for impossible combinations
-    if(f<9 && firstVal+(secondVal||0)>10 && first!=="X" && second!=="/"){ alert(`Invalid input in frame ${f+1}`); return frameScores;}
+  for(let f=0; f<10; f++){
+    if(rollIndex>=rolls.length) break;
+    let first=rolls[rollIndex];
+    let second=rolls[rollIndex+1];
+    let third=rolls[rollIndex+2];
+
+    const firstVal=convertRoll(first);
+    let secondVal = 0;
+
+    if(second==="/"){ // spare logic
+      secondVal = 10 - firstVal;
+    } else {
+      secondVal = convertRoll(second);
+    }
+
+    const thirdVal = convertRoll(third);
 
     let frameScore=0;
-    if(f<9){
+
+    if(f<9){ // frames 1-9
       if(first==="X"){
-        frameScore=10+nextValidRoll(rolls,rollIndex+1)+nextValidRoll(rolls,rollIndex+2); rollIndex+=1;
+        // Strike: 10 + next two valid rolls
+        const bonus1 = nextValidRoll(rolls, rollIndex+1);
+        const bonus2 = nextValidRoll(rolls, rollIndex+2);
+        frameScore = 10 + bonus1 + bonus2;
+        rollIndex += 1;
       } else if(second==="/"){
-        frameScore=10+nextValidRoll(rolls,rollIndex+2); rollIndex+=2;
-      } else{
-        frameScore=firstVal+secondVal; rollIndex+=2;
+        // Spare: 10 + next valid roll
+        const bonus = nextValidRoll(rolls, rollIndex+2);
+        frameScore = 10 + bonus;
+        rollIndex += 2;
+      } else {
+        frameScore = firstVal + secondVal;
+        rollIndex += 2;
       }
-    } else{ frameScore=firstVal+secondVal+thirdVal; rollIndex+=(third?3:2);}
+    } else { // 10th frame
+      frameScore = firstVal + secondVal + thirdVal;
+      rollIndex += (third ? 3 : 2);
+    }
+
     frameScores.push(frameScore);
   }
+
   return frameScores;
 }
 
-function nextValidRoll(rolls,start){
+function nextValidRoll(rolls, start){
   for(let i=start;i<rolls.length;i++){
-    const val=rolls[i];
-    if(val && val!==""){ if(val==="X") return 10; if(val==="-") return 0; if(!isNaN(val)) return parseInt(val); }
+    const val = rolls[i];
+    if(val && val!==""){
+      if(val==="X") return 10;
+      if(val==="/") return 10; // only used if first roll in frame was a number
+      if(val==="-") return 0;
+      if(!isNaN(val)) return parseInt(val);
+    }
   }
   return 0;
 }
-function convertRoll(val){ if(!val) return 0; if(val==="X") return 10; if(val==="-") return 0; if(!isNaN(val)) return parseInt(val); return 0;}
 
-// ----- Auto-tab & Active Frame -----
-function autoTab(frameObj,inp){
-  if(!inp.value) return;
-  const val=inp.value.toUpperCase();
-  if(val==="X" || val==="/" || val==="-"){
-    const nextInput=frameObj.input3||frameObj.input2||frameObj.input1;
-    if(nextInput!==inp){ nextInput.focus();}
-  }
+function convertRoll(val){
+  if(!val) return 0;
+  if(val==="X") return 10;
+  if(val==="-") return 0;
+  if(!isNaN(val)) return parseInt(val);
+  return 0;
 }
-
-function highlightActiveFrame(player,index){
-  player.frames.forEach((fObj,i)=>{
-    const ind=fObj.frameDiv.querySelector(".active-indicator");
-    if(i===index){ ind.textContent="➡"; } else { ind.textContent=""; }
-  });
-}
-</script>
-</body>
-</html>

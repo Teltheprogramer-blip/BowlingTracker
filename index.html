@@ -83,7 +83,6 @@ function startTeamMode() {
   const team1Container = buildTeam(scoreboard, "Team 1", team1Count);
   const team2Container = buildTeam(scoreboard, "Team 2", team2Count);
 
-  // Add Team Totals display
   [team1Container, team2Container].forEach(teamContainer => {
     const teamTotalDiv = document.createElement("div");
     teamTotalDiv.className = "totals";
@@ -174,14 +173,9 @@ function buildPlayer(container, label) {
       inp.addEventListener("input", () => {
         if (["X","/","-"].includes(inp.value.toUpperCase()) || !isNaN(inp.value)) {
           setActiveRoll(inp, frame);
-          // Validate frame input
-          const r1 = frame.input1.value.toUpperCase();
-          const r2 = frame.input2.value.toUpperCase();
-          if(f<9 && r1!=="X" && !isNaN(r1) && !isNaN(r2) && (parseInt(r1)+parseInt(r2)>10)){
-            inp.style.border="2px solid red"; return; // invalid
-          } else { inp.style.border="none"; }
           handleFrameInput(player);
           // Auto-tab & skip strike
+          const r1 = frame.input1.value.toUpperCase();
           if(inp===frame.input1 && r1==="X" && frame.input3===undefined){
             const nextFrame = player.frames[player.frames.indexOf(frame)+1];
             if(nextFrame) nextFrame.input1.focus();
@@ -226,10 +220,20 @@ function handleFrameInput(player){
     let frameScore=0;
 
     if(f<9){
-      if(first==="X"){ frameScore=10+convertRoll(rolls[rollIndex+1])+convertRoll(rolls[rollIndex+2]); rollIndex+=1; }
-      else if(second==="/"){ frameScore=10+convertRoll(rolls[rollIndex+2]); rollIndex+=2; }
-      else { frameScore=firstVal+secondVal; rollIndex+=2; }
-    } else { frameScore=firstVal+secondVal+thirdVal; rollIndex+=(third?3:2); }
+      if(first==="X"){ 
+        frameScore = 10 + convertRoll(rolls[rollIndex+1]) + convertRoll(rolls[rollIndex+2]); 
+        rollIndex += 1; 
+      } else if(second==="/"){ 
+        frameScore = 10; // ✅ Spare now counts as exactly 10 for the frame
+        rollIndex += 2; 
+      } else { 
+        frameScore = firstVal + secondVal; 
+        rollIndex += 2; 
+      }
+    } else { 
+      frameScore = firstVal + secondVal + thirdVal; 
+      rollIndex += (third?3:2); 
+    }
 
     frameScores.push(frameScore);
   }
@@ -270,7 +274,7 @@ function handleFrameInput(player){
 function convertRoll(val){
   if(!val) return 0;
   if(val==="X") return 10;
-  if(val==="/") return 10;
+  if(val==="/") return 0; // spare is handled separately in frame logic
   if(val==="-") return 0;
   if(!isNaN(val)) return parseInt(val);
   return 0;
@@ -292,4 +296,3 @@ function setActiveFrame(player,frameIndex){
 </script>
 </body>
 </html>
-

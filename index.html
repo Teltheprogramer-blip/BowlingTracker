@@ -80,8 +80,17 @@ function startTeamMode() {
   allPlayers = [];
   const team1Count = parseInt(prompt("Enter number of players for Team 1 (1-5):", "3"));
   const team2Count = parseInt(prompt("Enter number of players for Team 2 (1-5):", "3"));
-  buildTeam(scoreboard, "Team 1", team1Count);
-  buildTeam(scoreboard, "Team 2", team2Count);
+  const team1Container = buildTeam(scoreboard, "Team 1", team1Count);
+  const team2Container = buildTeam(scoreboard, "Team 2", team2Count);
+
+  // Add Team Totals display
+  [team1Container, team2Container].forEach(teamContainer => {
+    const teamTotalDiv = document.createElement("div");
+    teamTotalDiv.className = "totals";
+    teamTotalDiv.textContent = "Team Total: 0";
+    teamContainer.appendChild(teamTotalDiv);
+    teamContainer.teamTotalDiv = teamTotalDiv;
+  });
 }
 
 function buildTeam(container, teamName, playerCount) {
@@ -97,6 +106,7 @@ function buildTeam(container, teamName, playerCount) {
   }
 
   container.appendChild(teamContainer);
+  return teamContainer;
 }
 
 function buildPlayer(container, label) {
@@ -243,6 +253,18 @@ function handleFrameInput(player){
   const arc = JSON.parse(player.querySelector("select").value);
   const totalRaw = frameScores.reduce((a,b)=>a+b,0);
   player.querySelector(".totals").textContent=`Raw Total: ${totalRaw} | Final Total: ${totalRaw+arc.handicap}`;
+
+  // Update team total if in team mode
+  const teamContainer = player.parentNode.classList.contains("team-container") ? player.parentNode : player.parentNode.parentNode;
+  if(teamContainer && teamContainer.teamTotalDiv){
+    let teamTotal = 0;
+    teamContainer.querySelectorAll(".player").forEach(p=>{
+      const arc = JSON.parse(p.querySelector("select").value);
+      const rawTotal = p.querySelector(".totals").textContent.match(/Raw Total: (\d+)/);
+      if(rawTotal) teamTotal += parseInt(rawTotal[1]) + arc.handicap;
+    });
+    teamContainer.teamTotalDiv.textContent = `Team Total: ${teamTotal}`;
+  }
 }
 
 function convertRoll(val){
@@ -270,3 +292,4 @@ function setActiveFrame(player,frameIndex){
 </script>
 </body>
 </html>
+

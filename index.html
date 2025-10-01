@@ -1,13 +1,9 @@
-# Write updated HTML implementing:
-# 1) Single Player: single button
-# 2) Auto-advance: strike/spare behavior like bowling
-# 3) Validation: disallow illogical frame inputs; show error (frame turns red with message)
-html = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bowling Party!!! — Scorekeeper (5P, smarter input)</title>
+<title>Bowling Party!!! — Scorekeeper (Custom Team Sizes)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +33,7 @@ html = r"""<!DOCTYPE html>
   .brand .tag{ font-family:"Rajdhani",system-ui; letter-spacing:.6px; background:linear-gradient(90deg,var(--accent),#ffd976); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:700; font-size:24px; }
   .container{ width:min(1200px,96vw); margin:0 auto 80px; }
   .panel{ background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; margin:16px auto; }
-  .toolbar{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; align-items:start; }
+  .toolbar{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; align-items:start; }
   .btn{ appearance:none; border:none; cursor:pointer; padding:12px 14px; border-radius:12px; font-weight:800; letter-spacing:.3px; color:#0a0e1a; background:var(--primary); box-shadow:var(--shadow); transition:transform .08s ease, filter .2s ease; }
   .btn:hover{ filter:brightness(1.06) }
   .btn:active{ transform:translateY(1px) scale(.98) }
@@ -45,14 +41,19 @@ html = r"""<!DOCTYPE html>
   .btn.ghost{ background:transparent; color:var(--fg); border:2px solid var(--border); }
   .btn.danger{ background:var(--danger); color:#10121c }
   .group-title{ grid-column:1/-1; margin:8px 4px 0; font-weight:800; color:var(--accent); letter-spacing:.4px; }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .picker{ display:flex; align-items:center; gap:8px; }
+  .picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
+  .label{ color:var(--muted); font-weight:700; letter-spacing:.3px; }
+
   .scoreboard{ display:grid; gap:18px; }
   .team-container{ display:flex; flex-direction:column; gap:14px; }
   .team-title{ margin:0; padding:2px 8px 6px; font-size:22px; font-weight:800; color:var(--accent); }
   .player{ background:linear-gradient(180deg, rgba(21,28,60,.7), rgba(13,18,40,.8)); border:1.5px solid var(--border); border-radius:16px; padding:12px; }
   .player-head{ display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center; margin:2px 2px 8px; }
   .player-title{ margin:0; font-size:20px; font-weight:800; }
-  .picker{ display:flex; align-items:center; gap:8px; color:var(--muted); }
-  .picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
+  .p-picker{ display:flex; align-items:center; gap:8px; color:var(--muted); }
+  .p-picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
   .active-frame-indicator{ color:var(--accent); font-size:14px; margin:0 0 8px 2px; }
   .frames{ display:grid; grid-template-columns:repeat(10,minmax(90px,1fr)); gap:8px; overflow-x:auto; padding-bottom:8px; }
   .frame{ background:rgba(6,10,24,.6); border:1.5px solid var(--border); border-radius:12px; padding:8px; position:relative; }
@@ -72,9 +73,10 @@ html = r"""<!DOCTYPE html>
 <body>
 
 <header class="hero">
-  <img src="bowling party.jpg" class="title-img" alt="Bowling Party Header">
+  <!-- Use URL-encoded spaces with fallback to plain filenames -->
+  <img src="bowling%20party.jpg" class="title-img" alt="Bowling Party Header" onerror="this.onerror=null; this.src='bowling party.jpg';">
   <div class="brand">
-    <img src="SCG Logo.jpg" alt="Squishy Cube Games logo">
+    <img src="SCG%20Logo.jpg" alt="Squishy Cube Games logo" onerror="this.onerror=null; this.src='SCG Logo.jpg';">
     <div class="tag">Squishy&nbsp;Cube&nbsp;Games — Bowling&nbsp;Party Scorekeeper</div>
   </div>
 </header>
@@ -85,11 +87,21 @@ html = r"""<!DOCTYPE html>
     <button class="btn" onclick="startSingle()">Single (1P)</button>
 
     <div class="group-title">Two Teams</div>
-    <button class="btn secondary" onclick="startTeams(1)">Teams (1v1)</button>
-    <button class="btn secondary" onclick="startTeams(2)">Teams (2v2)</button>
-    <button class="btn secondary" onclick="startTeams(3)">Teams (3v3)</button>
-    <button class="btn secondary" onclick="startTeams(4)">Teams (4v4)</button>
-    <button class="btn secondary" onclick="startTeams(5)">Teams (5v5)</button>
+    <div class="row">
+      <div class="picker">
+        <span class="label">Team A size</span>
+        <select id="teamASelect">
+          <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
+        </select>
+      </div>
+      <div class="picker">
+        <span class="label">Team B size</span>
+        <select id="teamBSelect">
+          <option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <button class="btn secondary" onclick="startTeamsCustom()">Start Teams</button>
+    </div>
 
     <button class="btn ghost" onclick="openHelp()">How to Use</button>
     <button class="btn danger" onclick="resetAll()">Reset</button>
@@ -117,7 +129,7 @@ const archetypes=[
 ];
 
 function openHelp(){
-  alert("Input: 0–9, X (strike), - (miss), / (spare as 2nd roll).\nAuto-advance: X jumps to the next frame (except 10th where it moves forward within the frame). / jumps to the next frame (or to 3rd roll in the 10th). Illogical frames are highlighted in red.");
+  alert("Custom teams: pick sizes for Team A and B (1–5 each) then Start Teams.\nImages not showing? Keep 'bowling party.jpg' and 'SCG Logo.jpg' next to this HTML. Space characters are URL-encoded in src to avoid path issues.\nInput tips: X jumps to next frame (except within 10th), / jumps to next frame (or roll 3 in 10th). Invalid frames turn red.");
 }
 
 function resetAll(){ document.getElementById("scoreboard").innerHTML=""; }
@@ -132,15 +144,21 @@ function startSingle(){
   scrollToBoard();
 }
 
-function startTeams(nPerTeam){
+function startTeamsCustom(){
+  const a = parseInt(document.getElementById('teamASelect').value,10);
+  const b = parseInt(document.getElementById('teamBSelect').value,10);
+  startTeams(a,b);
+}
+
+function startTeams(nA,nB){
   const sb=document.getElementById("scoreboard"); sb.innerHTML="";
   const teamA=document.createElement("div"); teamA.className="team-container";
-  const teamATitle=document.createElement("h2"); teamATitle.className="team-title"; teamATitle.textContent="Team A"; teamA.appendChild(teamATitle);
+  const teamATitle=document.createElement("h2"); teamATitle.className="team-title"; teamATitle.textContent=`Team A (${nA})`; teamA.appendChild(teamATitle);
   const teamB=document.createElement("div"); teamB.className="team-container";
-  const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent="Team B"; teamB.appendChild(teamBTitle);
+  const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent=`Team B (${nB})`; teamB.appendChild(teamBTitle);
   sb.appendChild(teamA); sb.appendChild(teamB);
-  for(let i=1;i<=nPerTeam;i++){ buildPlayer(teamA, `A — Player ${i}`); }
-  for(let i=1;i<=nPerTeam;i++){ buildPlayer(teamB, `B — Player ${i}`); }
+  for(let i=1;i<=nA;i++){ buildPlayer(teamA, `A — Player ${i}`); }
+  for(let i=1;i<=nB;i++){ buildPlayer(teamB, `B — Player ${i}`); }
   scrollToBoard();
 }
 
@@ -153,11 +171,11 @@ function buildPlayer(container,label){
   const head=document.createElement("div"); head.className="player-head";
   const title=document.createElement("h3"); title.className="player-title"; title.textContent=label; head.appendChild(title);
 
-  const picker=document.createElement("div"); picker.className="picker";
+  const pp=document.createElement("div"); pp.className="p-picker";
   const pickLabel=document.createElement("span"); pickLabel.textContent="Archetype:";
   const sel=document.createElement("select");
   archetypes.forEach(a=>{ const opt=document.createElement("option"); opt.value=a.name; opt.textContent=`${a.name} • Avg ${a.average} • HCP ${a.handicap>=0?'+':''}${a.handicap}`; sel.appendChild(opt); });
-  picker.appendChild(pickLabel); picker.appendChild(sel); head.appendChild(picker);
+  pp.appendChild(pickLabel); pp.appendChild(sel); head.appendChild(pp);
   player.appendChild(head);
 
   const activeInd=document.createElement("div"); activeInd.className="active-frame-indicator"; activeInd.textContent="Enter scores for Frame 1"; player.appendChild(activeInd);
@@ -172,7 +190,6 @@ function buildPlayer(container,label){
     inputs.appendChild(in1); inputs.appendChild(in2);
     let in3=null;
     if(i===10){ in3=document.createElement("input"); in3.maxLength=1; in3.placeholder=" "; in3.dataset.frame=i; inputs.appendChild(in3); }
-    // events
     [in1,in2,in3].filter(Boolean).forEach(inp=>{
       inp.addEventListener("input",()=>onInput(player,frame,inp));
       inp.addEventListener("keyup",e=>autoAdvance(inp,e));
@@ -202,7 +219,6 @@ function sanitize(input){
   if(!validSymbol(v)){ input.value=''; return; }
   if(v==='x') input.value='X';
   if(input.dataset.frame!=="10"){
-    // disable second input on strike in frames 1-9
     const inputs = input.closest('.inputs').querySelectorAll('input');
     const in1=inputs[0], in2=inputs[1];
     if(in1.value.toUpperCase()==='X'){
@@ -219,37 +235,19 @@ function autoAdvance(input,e){
   const inputs=[...input.closest('.inputs').querySelectorAll('input')];
   const in1=inputs[0], in2=inputs[1], in3=inputs[2];
 
-  // Strike logic
   if(in1===input && input.value.toUpperCase()==='X'){
-    if(frameNum<10){
-      // jump to next frame first input
-      focusNextFrame(input, 1);
-      return;
-    }else{
-      // in 10th frame, move within frame
-      in2?.focus(); in2?.select?.();
-      return;
-    }
+    if(frameNum<10){ focusNextFrame(input,1); return; }
+    else { in2?.focus(); in2?.select?.(); return; }
   }
-
-  // Spare logic
   if(in2===input && input.value==='/'){
-    if(frameNum<10){
-      focusNextFrame(input, 1);
-      return;
-    }else{
-      // 10th frame spare → go to third
-      in3?.focus(); in3?.select?.();
-      return;
-    }
+    if(frameNum<10){ focusNextFrame(input,1); return; }
+    else { in3?.focus(); in3?.select?.(); return; }
   }
-
-  // Regular auto-advance to next input in same frame on character entry
   if(e.key && e.key.length===1 && input.value){
     if(input===in1 && !in2.disabled){ in2.focus(); in2.select?.(); }
     else if(input===in2 && in3){ in3.focus(); in3.select?.(); }
-    else if(input===in2 && !in3){ focusNextFrame(input, 1); }
-    else if(input===in3){ focusNextFrame(input, 1); }
+    else if(input===in2 && !in3){ focusNextFrame(input,1); }
+    else if(input===in3){ focusNextFrame(input,1); }
   }
 }
 
@@ -316,52 +314,36 @@ function validateFrame(frame){
     frame.querySelector('.error-msg').textContent = msg;
   }
 
-  // basic symbol validation
   const isNum = v => v!=='' && !isNaN(v);
   const asNum = v => v==='-'||v===''?0:parseInt(v);
   const isStrike = v => v==='X';
-  const isSpare = v => v==='/';
+  const isSpare = v => v==='/' ;
 
   if(n<10){
     if(isStrike(r1)){
       if(r2 && r2!==''){ setError("No 2nd roll after strike"); return false; }
       return true;
     }
-    // second cannot be strike
     if(isStrike(r2)){ setError("Strike only allowed as 1st roll"); return false; }
-    // spare must be second roll and first can't be strike
     if(isSpare(r1)){ setError("Spare only allowed as 2nd roll"); return false; }
     if(isSpare(r2)){
       if(r1==='' ){ setError("Enter 1st roll before spare"); return false; }
-      // ok
       return true;
     }
-    // both numeric/miss: sum must be <=9
     if((isNum(r1) || r1==='-') && (isNum(r2) || r2==='-')){
       const sum = asNum(r1)+asNum(r2);
-      if(sum>9){ setError("Pins in a frame can't exceed 9 (or use / for 10)"); return false; }
+      if(sum>9){ setError("Pins can't exceed 9 (use /)"); return false; }
       return true;
     }
     return true;
   } else {
-    // 10th frame rules (simplified but correct constraints)
     if(isStrike(r1)){
-      // r2 can be X, -, number, or spare? (spare after strike doesn't exist)
       if(isSpare(r2)){ setError("Spare can't follow a strike"); return false; }
-      // if r2 not entered yet, ok
-      if(r2===''){ return true; }
-      // if r2 is number or '-', r3 allowed; if r2 is X, r3 allowed
-      if(r3===''){ return true; }
-      // no further constraint besides being a valid symbol
       return true;
     }
     if(isSpare(r1)){ setError("Spare only allowed as 2nd roll"); return false; }
     if(r1===''){ return true; }
-    if(isSpare(r2)){
-      // spare means 10 pins total; r3 allowed anything valid
-      if(r3===''){ return true; }
-      return true;
-    }
+    if(isSpare(r2)){ return true; }
     if(isStrike(r2)){ setError("Strike only valid as 1st or 3rd in 10th"); return false; }
     if((isNum(r1)||r1==='-') && (isNum(r2)||r2==='-')){
       const sum = asNum(r1)+asNum(r2);
@@ -374,7 +356,6 @@ function validateFrame(frame){
 }
 
 function calculateAndDisplayScores(player){
-  // Ensure all frames validated (to keep error state in sync)
   player.frames.forEach(fr => validateFrame(fr.el));
 
   const rolls=[];
@@ -441,12 +422,8 @@ function updateTeamTotals(){
   });
 }
 
-// Start with 1P
+// Default landing: single player
 startSingle();
 </script>
 </body>
 </html>
-"""
-with open('/mnt/data/index_pretty_5p_v2.html','w',encoding='utf-8') as f:
-    f.write(html)
-print("OK")

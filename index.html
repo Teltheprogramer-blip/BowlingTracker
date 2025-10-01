@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Bowling Party!!! — Scorekeeper (Mobile-Optimized)</title>
+<title>Bowling Party!!! — Scorekeeper (Toggle Views)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,8 +59,14 @@
   .p-picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
   .active-frame-indicator{ color:var(--accent); font-size:13px; margin:0 0 8px 2px; }
 
-  .frames{ display:grid; grid-template-columns:repeat(10,minmax(88px,1fr)); gap:8px; overflow-x:auto; padding:6px 2px 10px; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
-  .frame{ background:rgba(6,10,24,.6); border:1.5px solid var(--border); border-radius:12px; padding:8px; position:relative; scroll-snap-align:center; }
+  /* Desktop layout */
+  body.desktop .frames{ display:grid; grid-template-columns:repeat(10,minmax(88px,1fr)); gap:8px; }
+  body.desktop .frame{ background:rgba(6,10,24,.6); border:1.5px solid var(--border); border-radius:12px; padding:8px; }
+
+  /* Mobile layout */
+  body.mobile .frames{ display:flex; overflow-x:auto; gap:8px; padding-bottom:10px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; }
+  body.mobile .frame{ flex:0 0 80%; max-width:320px; scroll-snap-align:center; }
+
   .frame.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(255,207,64,.25) inset; }
   .frame.error{ border-color:var(--danger); box-shadow:0 0 0 2px rgba(255,107,107,.25) inset; }
   .inputs{ display:flex; gap:6px; justify-content:center; margin-bottom:6px; }
@@ -70,29 +76,14 @@
   .error-msg{ position:absolute; left:6px; right:6px; bottom:30px; font-size:11px; color:#ffd6d6; display:none; text-align:center; }
   .frame.error .error-msg{ display:block; }
   .player-total{ margin-top:8px; text-align:right; font-weight:800; color:var(--success); }
-
   .team-total{ text-align:right; font-size:18px; font-weight:800; color:#ffe27a; margin-top:6px; }
-
-  @media (max-width: 820px){
-    .toolbar{ grid-template-columns:1fr; }
-    .brand img{ height:44px; }
-    .brand .tag{ font-size:18px; }
-    .panel{ padding:12px; }
-    .frames{ grid-template-columns:repeat(10,minmax(72px,1fr)); gap:6px; }
-    .inputs input{ width:32px; height:42px; font-size:18px; }
-  }
-  @media (max-width: 400px){
-    .frames{ grid-template-columns:repeat(10,minmax(66px,1fr)); }
-    .inputs input{ width:30px; height:40px; font-size:17px; }
-    .player-title{ font-size:16px; }
-  }
 
   .frames::-webkit-scrollbar{ height:8px }
   .frames::-webkit-scrollbar-track{ background:transparent }
   .frames::-webkit-scrollbar-thumb{ background:#1c2547; border-radius:999px }
 </style>
 </head>
-<body>
+<body class="desktop">
 
 <header class="hero">
   <img src="assets/bowling%20party.jpg" class="title-img" alt="Bowling Party Header" onerror="this.onerror=null; this.src='assets/bowling party.jpg';">
@@ -111,19 +102,16 @@
     <div class="row">
       <div class="picker">
         <span class="label">Team A size</span>
-        <select id="teamASelect">
-          <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
-        </select>
+        <select id="teamASelect"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
       </div>
       <div class="picker">
         <span class="label">Team B size</span>
-        <select id="teamBSelect">
-          <option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-        </select>
+        <select id="teamBSelect"><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
       </div>
       <button class="btn secondary" onclick="startTeamsCustom()">Start Teams</button>
     </div>
 
+    <button class="btn ghost" onclick="toggleView()">Switch View</button>
     <button class="btn ghost" onclick="openHelp()">How to Use</button>
     <button class="btn danger" onclick="resetAll()">Reset</button>
   </div>
@@ -134,6 +122,19 @@
 <footer class="footer">© Squishy Cube Games</footer>
 
 <script>
+/* === Toggle View Button === */
+function toggleView(){
+  if(document.body.classList.contains("mobile")){
+    document.body.classList.remove("mobile");
+    document.body.classList.add("desktop");
+  } else {
+    document.body.classList.remove("desktop");
+    document.body.classList.add("mobile");
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* === Archetypes === */
 const archetypes=[
   { name:"Tilly", handicap:39, average:166 },
   { name:"Debbie", handicap:71, average:121 },
@@ -149,28 +150,26 @@ const archetypes=[
   { name:"Amanda", handicap:32, average:164 }
 ];
 
+/* === Help + Reset === */
 function openHelp(){
-  alert("Custom teams: pick sizes for Team A and B (1–5 each) then Start Teams.\nImages not showing? Keep 'bowling party.jpg' and 'SCG Logo.jpg' next to this HTML. Space characters are URL-encoded in src to avoid path issues.\nInput tips: X jumps to next frame (except within 10th), / jumps to next frame (or roll 3 in 10th). Invalid frames turn red.");
+  alert("Tips:\n- X auto-jumps to next frame\n- / moves within 10th or to next frame\n- Invalid frames highlight red\n- Use Switch View to toggle desktop/mobile layout.");
 }
-
 function resetAll(){ document.getElementById("scoreboard").innerHTML=""; }
 
+/* === Start Game Functions === */
 function startSingle(){
   const sb=document.getElementById("scoreboard"); sb.innerHTML="";
   const team=document.createElement("div"); team.className="team-container";
   const title=document.createElement("h2"); title.className="team-title"; title.textContent="Single Game";
   team.appendChild(title);
-  buildPlayer(team, `Player 1`);
+  buildPlayer(team,"Player 1");
   sb.appendChild(team);
-  scrollToBoard();
 }
-
 function startTeamsCustom(){
-  const a = parseInt(document.getElementById('teamASelect').value,10);
-  const b = parseInt(document.getElementById('teamBSelect').value,10);
+  const a=parseInt(document.getElementById('teamASelect').value,10);
+  const b=parseInt(document.getElementById('teamBSelect').value,10);
   startTeams(a,b);
 }
-
 function startTeams(nA,nB){
   const sb=document.getElementById("scoreboard"); sb.innerHTML="";
   const teamA=document.createElement("div"); teamA.className="team-container";
@@ -178,20 +177,16 @@ function startTeams(nA,nB){
   const teamB=document.createElement("div"); teamB.className="team-container";
   const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent=`Team B (${nB})`; teamB.appendChild(teamBTitle);
   sb.appendChild(teamA); sb.appendChild(teamB);
-  for(let i=1;i<=nA;i++){ buildPlayer(teamA, `A — Player ${i}`); }
-  for(let i=1;i<=nB;i++){ buildPlayer(teamB, `B — Player ${i}`); }
-  scrollToBoard();
+  for(let i=1;i<=nA;i++){ buildPlayer(teamA,`A — Player ${i}`); }
+  for(let i=1;i<=nB;i++){ buildPlayer(teamB,`B — Player ${i}`); }
 }
 
-function scrollToBoard(){ document.querySelector('.container')?.scrollIntoView({behavior:'smooth'}); }
-
+/* === Build Player === */
 function buildPlayer(container,label){
-  const player=document.createElement("div");
-  player.className="player";
+  const player=document.createElement("div"); player.className="player";
 
   const head=document.createElement("div"); head.className="player-head";
   const title=document.createElement("h3"); title.className="player-title"; title.textContent=label; head.appendChild(title);
-
   const pp=document.createElement("div"); pp.className="p-picker";
   const pickLabel=document.createElement("span"); pickLabel.textContent="Archetype:";
   const sel=document.createElement("select");
@@ -232,6 +227,7 @@ function buildPlayer(container,label){
   updateActiveIndicator(player);
 }
 
+/* === Input + Focus Helpers === */
 function validSymbol(ch){
   return ch==='' || ch==='-' || ch.toUpperCase()==='X' || ch==='/' || (!isNaN(ch) && Number(ch)>=0 && Number(ch)<=9);
 }
@@ -239,6 +235,8 @@ function sanitize(input){
   let v=input.value;
   if(!validSymbol(v)){ input.value=''; return; }
   if(v==='x') input.value='X';
+
+  // Disable 2nd input if strike on non-10th
   if(input.dataset.frame!=="10"){
     const inputs = input.closest('.inputs').querySelectorAll('input');
     const in1=inputs[0], in2=inputs[1];
@@ -249,21 +247,23 @@ function sanitize(input){
     }
   }
 }
-
 function autoAdvance(input,e){
   sanitize(input);
   const frameNum = Number(input.dataset.frame);
   const inputs=[...input.closest('.inputs').querySelectorAll('input')];
   const in1=inputs[0], in2=inputs[1], in3=inputs[2];
 
+  // strike on 1st
   if(in1===input && input.value.toUpperCase()==='X'){
     if(frameNum<10){ focusNextFrame(input,1); return; }
     else { in2?.focus(); in2?.select?.(); return; }
   }
+  // spare on 2nd
   if(in2===input && input.value==='/'){
     if(frameNum<10){ focusNextFrame(input,1); return; }
     else { in3?.focus(); in3?.select?.(); return; }
   }
+  // general typing moves you forward
   if(e.key && e.key.length===1 && input.value){
     if(input===in1 && !in2.disabled){ in2.focus(); in2.select?.(); }
     else if(input===in2 && in3){ in3.focus(); in3.select?.(); }
@@ -271,17 +271,20 @@ function autoAdvance(input,e){
     else if(input===in3){ focusNextFrame(input,1); }
   }
 }
-
 function focusNextFrame(input, offset){
   const playerEl = input.closest('.player');
   const allFrames = [...playerEl.querySelectorAll('.frame')];
   const cur = allFrames.findIndex(f=> f.contains(input));
   const next = Math.min(allFrames.length-1, cur+offset);
-  const nextInputs = allFrames[next].querySelectorAll('.inputs input');
+  const nextEl = allFrames[next];
+  const nextInputs = nextEl.querySelectorAll('.inputs input');
   nextInputs[0].focus(); nextInputs[0].select?.();
-  updateActiveIndicatorByEl(playerEl, allFrames[next]);
+  // ensure visibility in mobile swipe mode
+  nextEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+  updateActiveIndicatorByEl(playerEl, nextEl);
 }
 
+/* === On Input === */
 function onInput(player,frame,input){
   sanitize(input);
   validateFrame(frame);
@@ -291,6 +294,7 @@ function onInput(player,frame,input){
   updateActiveIndicator(player);
 }
 
+/* === Active frame indicator === */
 function updateActiveIndicator(player){
   let idx=1;
   for(const f of player.frames){
@@ -312,14 +316,19 @@ function updateActiveIndicatorByEl(playerEl, activeFrameEl){
   playerEl.querySelector(".active-frame-indicator").textContent=`Enter scores for Frame ${idx}`;
 }
 
+/* === Scoring helpers === */
 function convertRoll(val){
   if(val==='-'||!val) return 0;
   if(!isNaN(val)) return parseInt(val);
   if(val.toUpperCase()==='X') return 10;
   return 0;
 }
-function nextValidRoll(rolls,start){ for(let i=start;i<rolls.length;i++){ if(rolls[i]!=='') return convertRoll(rolls[i]); } return 0; }
+function nextValidRoll(rolls,start){ // next filled symbol (respecting spare math when used)
+  for(let i=start;i<rolls.length;i++){ if(rolls[i]!=='') return convertRoll(rolls[i]); }
+  return 0;
+}
 
+/* === Validation (illegal frames turn red) === */
 function validateFrame(frame){
   frame.classList.remove('error');
   frame.querySelector('.error-msg').textContent = '';
@@ -358,6 +367,7 @@ function validateFrame(frame){
     }
     return true;
   } else {
+    // 10th frame rules
     if(isStrike(r1)){
       if(isSpare(r2)){ setError("Spare can't follow a strike"); return false; }
       return true;
@@ -376,9 +386,11 @@ function validateFrame(frame){
   }
 }
 
+/* === Scoring (strike/spare bonuses handled) === */
 function calculateAndDisplayScores(player){
   player.frames.forEach(fr => validateFrame(fr.el));
 
+  // flatten entered rolls into a list of symbols: 'X', '/', '0-9', '-'
   const rolls=[];
   player.frames.forEach(f=>{
     [f.input1,f.input2,f.input3].forEach(inp=>{
@@ -399,17 +411,19 @@ function calculateAndDisplayScores(player){
 
     let frameScore=null;
     if(idx<9){
-      if(first==='X'){
+      if(first==='X'){ // strike
         const bonus1=nextValidRoll(rolls,rollIndex+1);
+        // spare as the next-two symbol means 10 with previous bonus1
         let bonus2; const secondBonusSymbol=rolls[rollIndex+2];
         if(secondBonusSymbol==='/'){ bonus2=10-bonus1; } else { bonus2=nextValidRoll(rolls,rollIndex+2); }
         frameScore=10+bonus1+bonus2; rollIndex+=1;
-      } else if(second==='/'){
+      } else if(second==='/'){ // spare
         const bonus=nextValidRoll(rolls,rollIndex+2); frameScore=10+bonus; rollIndex+=2;
-      } else if(first && second){
+      } else if(first && second){ // open frame
         frameScore=firstVal+secondVal; rollIndex+=2;
       } else frameScore=null;
     } else {
+      // 10th frame: sum visible rolls (with spare meaning 10 across first two)
       frameScore=firstVal+secondVal+(f.input3 && f.input3.value?thirdVal:0);
       rollIndex+= (f.input3 && f.input3.value?3:2);
     }
@@ -422,12 +436,12 @@ function calculateAndDisplayScores(player){
   });
 }
 
+/* === Totals (player + team) === */
 function updatePlayerTotal(player){
   const sel=player.querySelector("select"); const archetype=archetypes.find(a=>a.name===sel.value);
   const last=player.frames[player.frames.length-1].score; const raw=parseInt(last.textContent)||0;
   player.querySelector(".player-total").textContent=`Total (with HCP): ${raw + archetype.handicap}`;
 }
-
 function updateTeamTotals(){
   document.querySelectorAll(".team-container").forEach(team=>{
     let teamTotal=0;
@@ -443,10 +457,9 @@ function updateTeamTotals(){
   });
 }
 
-// Default landing: single player
+/* === Default landing: single player === */
 startSingle();
+if (/Mobi|Android/i.test(navigator.userAgent)) { document.body.classList.remove('desktop'); document.body.classList.add('mobile'); }
 </script>
 </body>
 </html>
-
-

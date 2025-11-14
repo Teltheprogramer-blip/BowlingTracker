@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Bowling Party!!! — Scorekeeper (Toggle Views)</title>
+<title>Bowling Party!!! — Scorekeeper (Teams, Names, 10th Fix)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,17 +35,25 @@
   .container{ width:min(1200px,96vw); margin:0 auto 80px; }
   .panel{ background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin:14px auto; }
 
-  .toolbar{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; align-items:start; }
+  /* TOOLBAR: now vertical stack so controls don't overlap */
+  .toolbar{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
   .btn{ appearance:none; border:none; cursor:pointer; padding:12px 14px; border-radius:12px; font-weight:800; letter-spacing:.3px; color:#0a0e1a; background:var(--primary); box-shadow:var(--shadow); transition:transform .08s ease, filter .2s ease; touch-action:manipulation; }
   .btn:hover{ filter:brightness(1.06) }
   .btn:active{ transform:translateY(1px) scale(.98) }
   .btn.secondary{ background:#3de0a1 }
   .btn.ghost{ background:transparent; color:var(--fg); border:2px solid var(--border); }
   .btn.danger{ background:var(--danger); color:#10121c }
-  .group-title{ grid-column:1/-1; margin:6px 4px 0; font-weight:800; color:var(--accent); letter-spacing:.4px; }
-  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-  .picker{ display:flex; align-items:center; gap:8px; }
-  .picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
+  .group-title{ margin:6px 4px 0; font-weight:800; color:var(--accent); letter-spacing:.4px; }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; width:100%; }
+  .picker{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .picker select,
+  .picker input{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
+  .picker input{ width:170px; max-width:100%; }
   .label{ color:var(--muted); font-weight:700; letter-spacing:.3px; }
 
   .scoreboard{ display:grid; gap:14px; }
@@ -55,6 +63,8 @@
   .player{ background:linear-gradient(180deg, rgba(21,28,60,.7), rgba(13,18,40,.8)); border:1.5px solid var(--border); border-radius:16px; padding:12px; }
   .player-head{ position:sticky; top:0; background:linear-gradient(180deg, rgba(21,28,60,.96), rgba(13,18,40,.96)); backdrop-filter:saturate(120%) blur(4px); z-index:2; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin:-12px -12px 10px; padding:12px; border-bottom:1px solid var(--border); border-top-left-radius:16px; border-top-right-radius:16px; }
   .player-title{ margin:0; font-size:18px; font-weight:800; }
+  .player-name-input{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-weight:700; width:200px; max-width:100%; }
+  .archetype-line{ color:var(--muted); font-weight:700; }
   .p-picker{ display:flex; align-items:center; gap:8px; color:var(--muted); }
   .p-picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
   .active-frame-indicator{ color:var(--accent); font-size:13px; margin:0 0 8px 2px; }
@@ -76,11 +86,15 @@
   .error-msg{ position:absolute; left:6px; right:6px; bottom:30px; font-size:11px; color:#ffd6d6; display:none; text-align:center; }
   .frame.error .error-msg{ display:block; }
   .player-total{ margin-top:8px; text-align:right; font-weight:800; color:var(--success); }
-  .team-total{ text-align:right; font-size:18px; font-weight:800; color:#ffe27a; margin-top:6px; }
+  .team-total{ text-align:right; font-size:16px; font-weight:800; color:#ffe27a; margin-top:2px; }
 
   .frames::-webkit-scrollbar{ height:8px }
   .frames::-webkit-scrollbar-track{ background:transparent }
   .frames::-webkit-scrollbar-thumb{ background:#1c2547; border-radius:999px }
+
+  @media (max-width: 820px){
+    .picker input{ width:100%; }
+  }
 </style>
 </head>
 <body class="desktop">
@@ -101,12 +115,26 @@
     <div class="group-title">Two Teams</div>
     <div class="row">
       <div class="picker">
+        <span class="label">Team A name</span>
+        <input id="teamAName" type="text" placeholder="Team A" />
+      </div>
+      <div class="picker">
         <span class="label">Team A size</span>
-        <select id="teamASelect"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+        <select id="teamASelect">
+          <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="picker">
+        <span class="label">Team B name</span>
+        <input id="teamBName" type="text" placeholder="Team B" />
       </div>
       <div class="picker">
         <span class="label">Team B size</span>
-        <select id="teamBSelect"><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        <select id="teamBSelect">
+          <option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+        </select>
       </div>
       <button class="btn secondary" onclick="startTeamsCustom()">Start Teams</button>
     </div>
@@ -152,46 +180,71 @@ const archetypes=[
 
 /* === Help + Reset === */
 function openHelp(){
-  alert("Tips:\n- X auto-jumps to next frame\n- / moves within 10th or to next frame\n- Invalid frames highlight red\n- Use Switch View to toggle desktop/mobile layout.");
+  alert("Tips:\n- Enter custom team names, pick sizes, then Start Teams\n- Type each player's name above their archetype\n- X auto-jumps to next frame\n- / moves within 10th or to next frame\n- Invalid frames highlight red\n- Team lines show Scratch, Handicap, and Total.\n- Use Switch View to toggle desktop/mobile layout.");
 }
 function resetAll(){ document.getElementById("scoreboard").innerHTML=""; }
 
 /* === Start Game Functions === */
 function startSingle(){
   const sb=document.getElementById("scoreboard"); sb.innerHTML="";
-  const team=document.createElement("div"); team.className="team-container";
-  const title=document.createElement("h2"); title.className="team-title"; title.textContent="Single Game";
-  team.appendChild(title);
+  const team=document.createElement("div"); team.className="team-container"; team.dataset.teamName="Single";
+  const title=document.createElement("h2"); title.className="team-title"; title.textContent="Single Game"; team.appendChild(title);
   buildPlayer(team,"Player 1");
   sb.appendChild(team);
+  updateTeamTotals();
 }
 function startTeamsCustom(){
   const a=parseInt(document.getElementById('teamASelect').value,10);
   const b=parseInt(document.getElementById('teamBSelect').value,10);
-  startTeams(a,b);
+  const nameA=(document.getElementById('teamAName').value||'Team A').trim();
+  const nameB=(document.getElementById('teamBName').value||'Team B').trim();
+  startTeams(a,b,nameA,nameB);
 }
-function startTeams(nA,nB){
+function startTeams(nA,nB,nameA='Team A',nameB='Team B'){
   const sb=document.getElementById("scoreboard"); sb.innerHTML="";
-  const teamA=document.createElement("div"); teamA.className="team-container";
-  const teamATitle=document.createElement("h2"); teamATitle.className="team-title"; teamATitle.textContent=`Team A (${nA})`; teamA.appendChild(teamATitle);
-  const teamB=document.createElement("div"); teamB.className="team-container";
-  const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent=`Team B (${nB})`; teamB.appendChild(teamBTitle);
+  const teamA=document.createElement("div"); teamA.className="team-container"; teamA.dataset.teamName=nameA;
+  const teamATitle=document.createElement("h2"); teamATitle.className="team-title"; teamATitle.textContent=`${nameA} (${nA})`; teamA.appendChild(teamATitle);
+  const teamB=document.createElement("div"); teamB.className="team-container"; teamB.dataset.teamName=nameB;
+  const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent=`${nameB} (${nB})`; teamB.appendChild(teamBTitle);
   sb.appendChild(teamA); sb.appendChild(teamB);
-  for(let i=1;i<=nA;i++){ buildPlayer(teamA,`A — Player ${i}`); }
-  for(let i=1;i<=nB;i++){ buildPlayer(teamB,`B — Player ${i}`); }
+  for(let i=1;i<=nA;i++){ buildPlayer(teamA, `${nameA} — Player ${i}`); }
+  for(let i=1;i<=nB;i++){ buildPlayer(teamB, `${nameB} — Player ${i}`); }
+  updateTeamTotals();
 }
 
-/* === Build Player === */
+/* === Build Player (with editable name) === */
 function buildPlayer(container,label){
   const player=document.createElement("div"); player.className="player";
 
   const head=document.createElement("div"); head.className="player-head";
-  const title=document.createElement("h3"); title.className="player-title"; title.textContent=label; head.appendChild(title);
+
+  const titleWrap=document.createElement("div");
+  const title=document.createElement("h3"); title.className="player-title";
+  const nameInput=document.createElement("input");
+  nameInput.className="player-name-input";
+  nameInput.placeholder="Player name";
+  nameInput.value="";
+  nameInput.addEventListener("input", ()=> {
+    const nm=nameInput.value.trim();
+    title.textContent = nm ? nm : label;
+  });
+
+  title.textContent=label;
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(nameInput);
+  head.appendChild(titleWrap);
+
   const pp=document.createElement("div"); pp.className="p-picker";
   const pickLabel=document.createElement("span"); pickLabel.textContent="Archetype:";
   const sel=document.createElement("select");
   archetypes.forEach(a=>{ const opt=document.createElement("option"); opt.value=a.name; opt.textContent=`${a.name} • Avg ${a.average} • HCP ${a.handicap>=0?'+':''}${a.handicap}`; sel.appendChild(opt); });
-  pp.appendChild(pickLabel); pp.appendChild(sel); head.appendChild(pp);
+  pp.appendChild(pickLabel); pp.appendChild(sel);
+
+  const archLine=document.createElement("div"); archLine.className="archetype-line"; archLine.textContent=sel.value;
+  sel.addEventListener("change",()=>{ archLine.textContent=sel.value; calculateAndDisplayScores(player); updatePlayerTotal(player); updateTeamTotals(); });
+
+  head.appendChild(pp);
+  head.appendChild(archLine);
   player.appendChild(head);
 
   const activeInd=document.createElement("div"); activeInd.className="active-frame-indicator"; activeInd.textContent="Enter scores for Frame 1"; player.appendChild(activeInd);
@@ -221,8 +274,6 @@ function buildPlayer(container,label){
 
   player.appendChild(framesDiv); player.appendChild(totalDiv); container.appendChild(player);
 
-  sel.addEventListener("change",()=>{ calculateAndDisplayScores(player); updatePlayerTotal(player); updateTeamTotals(); });
-
   calculateAndDisplayScores(player); updatePlayerTotal(player); updateTeamTotals();
   updateActiveIndicator(player);
 }
@@ -236,7 +287,6 @@ function sanitize(input){
   if(!validSymbol(v)){ input.value=''; return; }
   if(v==='x') input.value='X';
 
-  // Disable 2nd input if strike on non-10th
   if(input.dataset.frame!=="10"){
     const inputs = input.closest('.inputs').querySelectorAll('input');
     const in1=inputs[0], in2=inputs[1];
@@ -253,17 +303,14 @@ function autoAdvance(input,e){
   const inputs=[...input.closest('.inputs').querySelectorAll('input')];
   const in1=inputs[0], in2=inputs[1], in3=inputs[2];
 
-  // strike on 1st
   if(in1===input && input.value.toUpperCase()==='X'){
     if(frameNum<10){ focusNextFrame(input,1); return; }
     else { in2?.focus(); in2?.select?.(); return; }
   }
-  // spare on 2nd
   if(in2===input && input.value==='/'){
     if(frameNum<10){ focusNextFrame(input,1); return; }
     else { in3?.focus(); in3?.select?.(); return; }
   }
-  // general typing moves you forward
   if(e.key && e.key.length===1 && input.value){
     if(input===in1 && !in2.disabled){ in2.focus(); in2.select?.(); }
     else if(input===in2 && in3){ in3.focus(); in3.select?.(); }
@@ -279,7 +326,6 @@ function focusNextFrame(input, offset){
   const nextEl = allFrames[next];
   const nextInputs = nextEl.querySelectorAll('.inputs input');
   nextInputs[0].focus(); nextInputs[0].select?.();
-  // ensure visibility in mobile swipe mode
   nextEl.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   updateActiveIndicatorByEl(playerEl, nextEl);
 }
@@ -323,7 +369,7 @@ function convertRoll(val){
   if(val.toUpperCase()==='X') return 10;
   return 0;
 }
-function nextValidRoll(rolls,start){ // next filled symbol (respecting spare math when used)
+function nextValidRoll(rolls,start){
   for(let i=start;i<rolls.length;i++){ if(rolls[i]!=='') return convertRoll(rolls[i]); }
   return 0;
 }
@@ -386,11 +432,10 @@ function validateFrame(frame){
   }
 }
 
-/* === Scoring (strike/spare bonuses handled) === */
+/* === Scoring (incl. 10th-frame spare/strike partials) === */
 function calculateAndDisplayScores(player){
   player.frames.forEach(fr => validateFrame(fr.el));
 
-  // flatten entered rolls into a list of symbols: 'X', '/', '0-9', '-'
   const rolls=[];
   player.frames.forEach(f=>{
     [f.input1,f.input2,f.input3].forEach(inp=>{
@@ -398,68 +443,121 @@ function calculateAndDisplayScores(player){
     });
   });
 
-  let runningTotal=0; let rollIndex=0;
-  player.frames.forEach((f,idx)=>{
-    const first=rolls[rollIndex];
-    const second=rolls[rollIndex+1];
-    const third=rolls[rollIndex+2];
-    const firstVal=convertRoll(first);
-    let secondVal=0;
-    if(second==='/') secondVal=10-firstVal;
-    else secondVal=convertRoll(second);
-    const thirdVal=convertRoll(third);
+  let runningTotal=0; 
+  let rollIndex=0;
 
+  player.frames.forEach((f,idx)=>{
     let frameScore=null;
+
     if(idx<9){
+      const first=rolls[rollIndex];
+      const second=rolls[rollIndex+1];
+      const firstVal=convertRoll(first);
+      let secondVal=0;
+      if(second==='/') secondVal=10-firstVal; else secondVal=convertRoll(second);
+
       if(first==='X'){ // strike
         const bonus1=nextValidRoll(rolls,rollIndex+1);
-        // spare as the next-two symbol means 10 with previous bonus1
-        let bonus2; const secondBonusSymbol=rolls[rollIndex+2];
-        if(secondBonusSymbol==='/'){ bonus2=10-bonus1; } else { bonus2=nextValidRoll(rolls,rollIndex+2); }
-        frameScore=10+bonus1+bonus2; rollIndex+=1;
+        const secondBonusSymbol=rolls[rollIndex+2];
+        const bonus2 = (secondBonusSymbol==='/') ? (10 - bonus1) : nextValidRoll(rolls,rollIndex+2);
+        frameScore=10+bonus1+bonus2; 
+        rollIndex+=1;
       } else if(second==='/'){ // spare
-        const bonus=nextValidRoll(rolls,rollIndex+2); frameScore=10+bonus; rollIndex+=2;
-      } else if(first && second){ // open frame
-        frameScore=firstVal+secondVal; rollIndex+=2;
-      } else frameScore=null;
+        const bonus=nextValidRoll(rolls,rollIndex+2); 
+        frameScore=10+bonus; 
+        rollIndex+=2;
+      } else if(first!==undefined && second!==undefined){
+        frameScore=firstVal+secondVal; 
+        rollIndex+=2;
+      }
     } else {
-      // 10th frame: sum visible rolls (with spare meaning 10 across first two)
-      frameScore=firstVal+secondVal+(f.input3 && f.input3.value?thirdVal:0);
-      rollIndex+= (f.input3 && f.input3.value?3:2);
+      const r1 = (f.input1?.value||'').toUpperCase();
+      const r2 = (f.input2?.value||'').toUpperCase();
+      const r3 = (f.input3?.value||'').toUpperCase();
+
+      const v1 = convertRoll(r1);
+      const v2 = (r2==='/') ? (r1 ? (10 - convertRoll(r1)) : 10) : convertRoll(r2);
+      const v3 = convertRoll(r3);
+
+      if(r1==='X'){
+        if(!r2){ frameScore = 10; }
+        else if(!r3){ frameScore = 10 + v2; }
+        else { frameScore = 10 + v2 + v3; }
+      } else if(r2==='/'){
+        frameScore = 10 + (r3 ? v3 : 0);
+      } else if(r1!=='' && r2!==''){
+        frameScore = v1 + v2;
+      } else {
+        frameScore = null;
+      }
     }
 
     if(frameScore!==null){
       runningTotal+=frameScore;
       f.score.style.visibility="visible";
       f.score.textContent=runningTotal;
-    } else f.score.style.visibility="hidden";
+    } else {
+      f.score.style.visibility="hidden";
+    }
   });
 }
 
 /* === Totals (player + team) === */
 function updatePlayerTotal(player){
-  const sel=player.querySelector("select"); const archetype=archetypes.find(a=>a.name===sel.value);
-  const last=player.frames[player.frames.length-1].score; const raw=parseInt(last.textContent)||0;
-  player.querySelector(".player-total").textContent=`Total (with HCP): ${raw + archetype.handicap}`;
+  const sel=player.querySelector("select"); 
+  const archetype=archetypes.find(a=>a.name===sel.value);
+  const last=player.frames[player.frames.length-1].score; 
+  const raw=parseInt(last.textContent)||0;
+  player.querySelector(".player-total").textContent=`Total (with HCP): ${raw + (archetype?.handicap||0)}`;
 }
+
 function updateTeamTotals(){
   document.querySelectorAll(".team-container").forEach(team=>{
-    let teamTotal=0;
+    let scratchTotal=0;
+    let handicapTotal=0;
+
     const players=team.querySelectorAll(".player");
     players.forEach(p=>{
-      const sel=p.querySelector("select"); const archetype=archetypes.find(a=>a.name===sel.value);
-      const lastScore=p.querySelector('.frame:last-child .score'); const raw=parseInt(lastScore?.textContent||"0")||0;
-      teamTotal += raw + archetype.handicap;
+      const sel=p.querySelector("select"); 
+      const archetype=archetypes.find(a=>a.name===sel.value);
+      const lastScore=p.querySelector('.frame:last-child .score'); 
+      const raw=parseInt(lastScore?.textContent||"0")||0;
+
+      scratchTotal += raw;
+      handicapTotal += (archetype?.handicap || 0);
     });
-    let totalDiv=team.querySelector(".team-total");
-    if(!totalDiv){ totalDiv=document.createElement("div"); totalDiv.className="team-total"; team.appendChild(totalDiv); }
-    totalDiv.textContent=`Team Total: ${teamTotal}`;
+
+    const overall = scratchTotal + handicapTotal;
+    const teamName = team.dataset.teamName || 'Team';
+
+    let scratchDiv=team.querySelector(".team-total-scratch");
+    let hcpDiv=team.querySelector(".team-total-hcp");
+    let totalDiv=team.querySelector(".team-total-overall");
+
+    if(!scratchDiv){
+      scratchDiv=document.createElement("div");
+      scratchDiv.className="team-total team-total-scratch";
+      team.appendChild(scratchDiv);
+    }
+    if(!hcpDiv){
+      hcpDiv=document.createElement("div");
+      hcpDiv.className="team-total team-total-hcp";
+      team.appendChild(hcpDiv);
+    }
+    if(!totalDiv){
+      totalDiv=document.createElement("div");
+      totalDiv.className="team-total team-total-overall";
+      team.appendChild(totalDiv);
+    }
+
+    scratchDiv.textContent=`${teamName} Scratch: ${scratchTotal}`;
+    hcpDiv.textContent=`${teamName} Handicap: ${handicapTotal}`;
+    totalDiv.textContent=`${teamName} Total: ${overall}`;
   });
 }
 
 /* === Default landing: single player === */
 startSingle();
-if (/Mobi|Android/i.test(navigator.userAgent)) { document.body.classList.remove('desktop'); document.body.classList.add('mobile'); }
 </script>
 </body>
 </html>

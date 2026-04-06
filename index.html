@@ -386,7 +386,7 @@ function buildPlayer(container,label){
   nameInput.addEventListener("input", ()=> {
     const nm=nameInput.value.trim();
     title.textContent = nm ? nm : label;
-    syncTurnPanel();
+    updateTurnPanelDisplayOnly();
   });
 
   title.textContent=label;
@@ -1099,6 +1099,42 @@ function initTurnPanel(){
   syncTurnPanel();
 }
 
+function updateTurnPanelDisplayOnly(){
+  const active = getActivePlayer();
+  const nameEl = document.getElementById("turnName");
+  const subEl = document.getElementById("turnSub");
+  const r1 = document.getElementById("turnRoll1");
+  const r2 = document.getElementById("turnRoll2");
+  const r3 = document.getElementById("turnRoll3");
+
+  getPlayers().forEach(p => p.classList.remove("current-turn"));
+
+  if(!active){
+    nameEl.textContent = "Game Complete";
+    subEl.textContent = "All bowlers have completed 10 frames.";
+    r1.disabled = r2.disabled = r3.disabled = true;
+    return;
+  }
+
+  active.classList.add("current-turn");
+
+  const frameNum = getCurrentFrameNumber(active);
+  const playerName = getPlayerName(active);
+  const teamName = getPlayerTeamName(active);
+
+  nameEl.textContent = playerName;
+
+  if(teamName){
+    subEl.textContent = `Now bowling — ${teamName} — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
+  } else {
+    subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
+  }
+
+  r1.disabled = false;
+  r2.disabled = false;
+  r3.disabled = frameNum < 10;
+}
+
 function syncTurnPanel(){
   const active = getActivePlayer();
   const nameEl = document.getElementById("turnName");
@@ -1135,7 +1171,7 @@ function syncTurnPanel(){
   r3.disabled = frameNum < 10;
   if(frameNum < 10) r3.value = "";
 
-  clearTurnPanelInputs();
+  clearTurnPanelInputs(false);
 }
 
 function submitTurnPanel(){

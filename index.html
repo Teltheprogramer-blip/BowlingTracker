@@ -116,6 +116,31 @@
     font-size:13px;
     margin-top:8px;
   }
+  .turn-stats{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(180px,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  .turn-stat{
+    background:rgba(10,15,35,.72);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px 12px;
+  }
+  .turn-stat-label{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+    margin-bottom:4px;
+  }
+  .turn-stat-value{
+    color:#fff2b6;
+    font-size:22px;
+    font-weight:800;
+    line-height:1.1;
+  }
 
   .scoreboard{ display:grid; gap:14px; }
   .team-container{ display:flex; flex-direction:column; gap:12px; }
@@ -237,6 +262,24 @@
       <button class="btn ghost" onclick="clearTurnPanelInputs()">Clear</button>
     </div>
     <div class="turn-help">Use numbers, X, /, or - . The panel updates to the current bowler and current frame automatically.</div>
+    <div class="turn-stats">
+      <div class="turn-stat">
+        <div class="turn-stat-label">Player Scratch</div>
+        <div id="turnPlayerScratch" class="turn-stat-value">0</div>
+      </div>
+      <div class="turn-stat">
+        <div class="turn-stat-label">Player Total</div>
+        <div id="turnPlayerTotal" class="turn-stat-value">0</div>
+      </div>
+      <div class="turn-stat">
+        <div class="turn-stat-label">Team Scratch</div>
+        <div id="turnTeamScratch" class="turn-stat-value">0</div>
+      </div>
+      <div class="turn-stat">
+        <div class="turn-stat-label">Team Total</div>
+        <div id="turnTeamTotal" class="turn-stat-value">0</div>
+      </div>
+    </div>
   </div>
 
   <div id="scoreboard" class="panel scoreboard" aria-live="polite"></div>
@@ -839,6 +882,63 @@ function getPlayerScratchTotal(player){
   return 0;
 }
 
+function getPlayerTotalValue(player){
+  const raw = getPlayerScratchTotal(player);
+
+  if(gameMode === "open") return raw;
+
+  const sel = player?.querySelector("select");
+  const archetype = archetypes.find(a => a.name === sel?.value);
+  return raw + (archetype?.handicap || 0);
+}
+
+function getTeamScratchTotal(team){
+  if(!team) return 0;
+
+  let scratchTotal = 0;
+  team.querySelectorAll(".player").forEach(player=>{
+    scratchTotal += getPlayerScratchTotal(player);
+  });
+  return scratchTotal;
+}
+
+function getTeamTotalValue(team){
+  if(!team) return 0;
+
+  const scratchTotal = getTeamScratchTotal(team);
+  if(gameMode === "open") return scratchTotal;
+
+  let handicapTotal = 0;
+  team.querySelectorAll(".player").forEach(player=>{
+    const sel = player.querySelector("select");
+    const archetype = archetypes.find(a => a.name === sel?.value);
+    handicapTotal += (archetype?.handicap || 0);
+  });
+
+  return scratchTotal + handicapTotal;
+}
+
+function updateTurnPanelStats(player){
+  const playerScratchEl = document.getElementById("turnPlayerScratch");
+  const playerTotalEl = document.getElementById("turnPlayerTotal");
+  const teamScratchEl = document.getElementById("turnTeamScratch");
+  const teamTotalEl = document.getElementById("turnTeamTotal");
+
+  if(!player){
+    if(playerScratchEl) playerScratchEl.textContent = "0";
+    if(playerTotalEl) playerTotalEl.textContent = "0";
+    if(teamScratchEl) teamScratchEl.textContent = "0";
+    if(teamTotalEl) teamTotalEl.textContent = "0";
+    return;
+  }
+
+  const team = player.closest(".team-container");
+  if(playerScratchEl) playerScratchEl.textContent = String(getPlayerScratchTotal(player));
+  if(playerTotalEl) playerTotalEl.textContent = String(getPlayerTotalValue(player));
+  if(teamScratchEl) teamScratchEl.textContent = String(getTeamScratchTotal(team));
+  if(teamTotalEl) teamTotalEl.textContent = String(getTeamTotalValue(team));
+}
+
 /* === Totals === */
 
 function updatePlayerTotal(player){
@@ -849,9 +949,7 @@ function updatePlayerTotal(player){
     return;
   }
 
-  const sel=player.querySelector("select");
-  const archetype=archetypes.find(a=>a.name===sel?.value);
-  player.querySelector(".player-total").textContent=`Total (with HCP): ${raw + (archetype?.handicap||0)}`;
+  player.querySelector(".player-total").textContent=`Total (with HCP): ${getPlayerTotalValue(player)}`;
 }
 
 function updateTeamTotals(){
@@ -1129,6 +1227,7 @@ function updateTurnPanelDisplayOnly(){
     nameEl.textContent = "Game Complete";
     subEl.textContent = "All bowlers have completed 10 frames.";
     r1.disabled = r2.disabled = r3.disabled = true;
+    updateTurnPanelStats(null);
     return;
   }
 
@@ -1145,6 +1244,8 @@ function updateTurnPanelDisplayOnly(){
   } else {
     subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
   }
+
+  updateTurnPanelStats(active);
 
   r1.disabled = false;
   r2.disabled = false;
@@ -1165,6 +1266,7 @@ function syncTurnPanel(){
     nameEl.textContent = "Game Complete";
     subEl.textContent = "All bowlers have completed 10 frames.";
     r1.disabled = r2.disabled = r3.disabled = true;
+    updateTurnPanelStats(null);
     return;
   }
 
@@ -1181,6 +1283,8 @@ function syncTurnPanel(){
   } else {
     subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
   }
+
+  updateTurnPanelStats(active);
 
   r1.disabled = false;
   r2.disabled = false;

@@ -596,7 +596,7 @@ function updateActiveIndicatorByEl(playerEl, activeFrameEl){
 /* === Scoring helpers === */
 function convertRoll(val){
   if(val==='-'||!val) return 0;
-  if(!isNaN(val)) return parseInt(val);
+  if(!isNaN(val)) return parseInt(val, 10);
   if(val.toUpperCase()==='X') return 10;
   return 0;
 }
@@ -711,7 +711,6 @@ function validateFrame(frame){
 
   return true;
 }
-}
 
 /* === Scoring === */
 function calculateAndDisplayScores(player){
@@ -764,7 +763,7 @@ function calculateAndDisplayScores(player){
       const val=v=>{
         if(v==='X') return 10;
         if(v==='-'||v==='') return 0;
-        if(!isNaN(v)) return parseInt(v);
+        if(!isNaN(v)) return parseInt(v, 10);
         return 0;
       };
 
@@ -801,7 +800,7 @@ function calculateAndDisplayScores(player){
         }
         else if(r2==='/'){
           if(r3===''){
-            frameScore=10; // FIX: instant spare scoring
+            frameScore=10; // instant spare scoring in 10th
           } else {
             frameScore=10+val(r3);
           }
@@ -996,22 +995,6 @@ function getTurnPanelValues(){
     r2: document.getElementById("turnRoll2").value.toUpperCase(),
     r3: document.getElementById("turnRoll3").value.toUpperCase()
   };
-}
-
-function turnPanelEntryComplete(frameNum){
-  const { r1, r2, r3 } = getTurnPanelValues();
-
-  if(frameNum < 10){
-    if(r1 === 'X') return true;
-    if(!r1) return false;
-    return !!r2;
-  }
-
-  if(!r1) return false;
-  if(!r2) return false;
-
-  if(r1 === 'X' || r2 === '/') return !!r3;
-  return true;
 }
 
 function moveTurnPanelFocus(){

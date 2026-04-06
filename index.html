@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Bowling Party!!! — Scorekeeper (Teams, Names, 10th Fix)</title>
+<title>Bowling Party!!! — Scorekeeper</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,19 +35,25 @@
   .container{ width:min(1200px,96vw); margin:0 auto 80px; }
   .panel{ background:var(--card); border:1.5px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin:14px auto; }
 
-  /* TOOLBAR: now vertical stack so controls don't overlap */
   .toolbar{
     display:flex;
     flex-direction:column;
     align-items:flex-start;
     gap:10px;
   }
-  .btn{ appearance:none; border:none; cursor:pointer; padding:12px 14px; border-radius:12px; font-weight:800; letter-spacing:.3px; color:#0a0e1a; background:var(--primary); box-shadow:var(--shadow); transition:transform .08s ease, filter .2s ease; touch-action:manipulation; }
+
+  .btn{
+    appearance:none; border:none; cursor:pointer; padding:12px 14px; border-radius:12px; font-weight:800; letter-spacing:.3px;
+    color:#0a0e1a; background:var(--primary); box-shadow:var(--shadow);
+    transition:transform .08s ease, filter .2s ease; touch-action:manipulation;
+  }
   .btn:hover{ filter:brightness(1.06) }
   .btn:active{ transform:translateY(1px) scale(.98) }
   .btn.secondary{ background:#3de0a1 }
   .btn.ghost{ background:transparent; color:var(--fg); border:2px solid var(--border); }
   .btn.danger{ background:var(--danger); color:#10121c }
+  .btn.accent{ background:var(--accent); color:#111; }
+
   .group-title{ margin:6px 4px 0; font-weight:800; color:var(--accent); letter-spacing:.4px; }
   .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; width:100%; }
   .picker{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -56,26 +62,94 @@
   .picker input{ width:170px; max-width:100%; }
   .label{ color:var(--muted); font-weight:700; letter-spacing:.3px; }
 
+  .turn-panel{
+    display:none;
+    background:linear-gradient(180deg, rgba(21,28,60,.95), rgba(13,18,40,.95));
+    border:2px solid var(--accent);
+  }
+  .turn-panel.visible{ display:block; }
+  .turn-header{
+    font-weight:800;
+    color:var(--accent);
+    margin-bottom:10px;
+    letter-spacing:.4px;
+  }
+  .turn-name{
+    font-size:28px;
+    font-weight:800;
+    background:rgba(255,207,64,.14);
+    border:2px solid rgba(255,207,64,.45);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    color:#fff2b6;
+  }
+  .turn-sub{
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:12px;
+  }
+  .turn-inputs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  .turn-rolls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .turn-rolls input{
+    width:52px;
+    height:52px;
+    text-align:center;
+    font-size:22px;
+    font-weight:800;
+    color:var(--fg);
+    background:#0a0f23;
+    border:1px solid var(--border);
+    border-radius:12px;
+  }
+  .turn-help{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:8px;
+  }
+
   .scoreboard{ display:grid; gap:14px; }
   .team-container{ display:flex; flex-direction:column; gap:12px; }
   .team-title{ margin:0; padding:2px 8px 6px; font-size:20px; font-weight:800; color:var(--accent); }
 
-  .player{ background:linear-gradient(180deg, rgba(21,28,60,.7), rgba(13,18,40,.8)); border:1.5px solid var(--border); border-radius:16px; padding:12px; }
-  .player-head{ position:sticky; top:0; background:linear-gradient(180deg, rgba(21,28,60,.96), rgba(13,18,40,.96)); backdrop-filter:saturate(120%) blur(4px); z-index:2; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; margin:-12px -12px 10px; padding:12px; border-bottom:1px solid var(--border); border-top-left-radius:16px; border-top-right-radius:16px; }
+  .player{
+    background:linear-gradient(180deg, rgba(21,28,60,.7), rgba(13,18,40,.8));
+    border:1.5px solid var(--border);
+    border-radius:16px;
+    padding:12px;
+  }
+  .player.current-turn{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px rgba(255,207,64,.22) inset, 0 0 18px rgba(255,207,64,.12);
+  }
+
+  .player-head{
+    position:sticky; top:0; background:linear-gradient(180deg, rgba(21,28,60,.96), rgba(13,18,40,.96));
+    backdrop-filter:saturate(120%) blur(4px); z-index:2; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;
+    margin:-12px -12px 10px; padding:12px; border-bottom:1px solid var(--border); border-top-left-radius:16px; border-top-right-radius:16px;
+  }
   .player-title{ margin:0; font-size:18px; font-weight:800; }
   .player-name-input{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-weight:700; width:200px; max-width:100%; }
   .archetype-line{ color:var(--muted); font-weight:700; }
   .p-picker{ display:flex; align-items:center; gap:8px; color:var(--muted); }
   .p-picker select{ background:#0c1229; color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font-weight:600; }
+
   .active-frame-indicator{ color:var(--accent); font-size:13px; margin:0 0 8px 2px; }
 
-  /* Desktop layout */
   body.desktop .frames{ display:grid; grid-template-columns:repeat(10,minmax(88px,1fr)); gap:8px; }
-  body.desktop .frame{ background:rgba(6,10,24,.6); border:1.5px solid var(--border); border-radius:12px; padding:8px; }
+  body.desktop .frame{ background:rgba(6,10,24,.6); border:1.5px solid var(--border); border-radius:12px; padding:8px; position:relative; }
 
-  /* Mobile layout */
   body.mobile .frames{ display:flex; overflow-x:auto; gap:8px; padding-bottom:10px; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; }
-  body.mobile .frame{ flex:0 0 80%; max-width:320px; scroll-snap-align:center; }
+  body.mobile .frame{ flex:0 0 80%; max-width:320px; scroll-snap-align:center; position:relative; }
 
   .frame.active{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(255,207,64,.25) inset; }
   .frame.error{ border-color:var(--danger); box-shadow:0 0 0 2px rgba(255,107,107,.25) inset; }
@@ -85,6 +159,7 @@
   .frame-label{ font-size:12px; color:var(--muted); text-align:center; }
   .error-msg{ position:absolute; left:6px; right:6px; bottom:30px; font-size:11px; color:#ffd6d6; display:none; text-align:center; }
   .frame.error .error-msg{ display:block; }
+
   .player-total{ margin-top:8px; text-align:right; font-weight:800; color:var(--success); }
   .team-total{ text-align:right; font-size:16px; font-weight:800; color:#ffe27a; margin-top:2px; }
 
@@ -110,7 +185,10 @@
 <div class="container">
   <div class="panel toolbar" role="toolbar" aria-label="Main controls">
     <div class="group-title">Single Player</div>
-    <button class="btn" onclick="startSingle()">Single (1P)</button>
+    <div class="row">
+      <button class="btn" onclick="startSingle('standard')">Single (1P)</button>
+      <button class="btn accent" onclick="startSingle('open')">Single Open Frame</button>
+    </div>
 
     <div class="group-title">Two Teams</div>
     <div class="row">
@@ -136,12 +214,29 @@
           <option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
         </select>
       </div>
-      <button class="btn secondary" onclick="startTeamsCustom()">Start Teams</button>
+      <button class="btn secondary" onclick="startTeamsCustom('standard')">Start Teams</button>
+      <button class="btn accent" onclick="startTeamsCustom('open')">Start Open Frame Teams</button>
     </div>
 
     <button class="btn ghost" onclick="toggleView()">Switch View</button>
     <button class="btn ghost" onclick="openHelp()">How to Use</button>
     <button class="btn danger" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div id="turnPanel" class="panel turn-panel" aria-live="polite">
+    <div class="turn-header">Current Turn Entry</div>
+    <div id="turnName" class="turn-name">No active bowler</div>
+    <div id="turnSub" class="turn-sub">Start a game to begin.</div>
+    <div class="turn-inputs">
+      <div class="turn-rolls">
+        <input id="turnRoll1" maxlength="1" placeholder="1">
+        <input id="turnRoll2" maxlength="1" placeholder="2">
+        <input id="turnRoll3" maxlength="1" placeholder="3">
+      </div>
+      <button class="btn secondary" onclick="submitTurnPanel()">Enter Frame</button>
+      <button class="btn ghost" onclick="clearTurnPanelInputs()">Clear</button>
+    </div>
+    <div class="turn-help">Use numbers, X, /, or - . The panel updates to the current bowler and current frame automatically.</div>
   </div>
 
   <div id="scoreboard" class="panel scoreboard" aria-live="polite"></div>
@@ -150,6 +245,11 @@
 <footer class="footer">© Squishy Cube Games</footer>
 
 <script>
+/* === Global state === */
+let gameMode = "standard"; // "standard" | "open"
+let currentTurnIndex = 0;
+let turnPanelEventsBound = false;
+
 /* === Toggle View Button === */
 function toggleView(){
   if(document.body.classList.contains("mobile")){
@@ -163,63 +263,122 @@ function toggleView(){
 }
 
 /* === Archetypes === */
-const archetypes=[
-  { name:"Tilly", handicap:39, average:166 },
-  { name:"Debbie", handicap:71, average:121 },
-  { name:"Robert", handicap:-59, average:279 },
-  { name:"Samuel", handicap:19, average:188 },
-  { name:"Peyton", handicap:-27, average:241 },
-  { name:"Amara", handicap:-40, average:255 },
-  { name:"Tito", handicap:27, average:180 },
-  { name:"Wendy", handicap:-46, average:262 },
-  { name:"David", handicap:32, average:174 },
-  { name:"Marcus", handicap:49, average:156 },
-  { name:"Jacob", handicap:58, average:145 },
-  { name:"Amanda", handicap:32, average:164 }
+const archetypes = [
+  { name:"Amanda", average:167, handicap:30 },
+  { name:"Amara", average:255, handicap:-40 },
+  { name:"David", average:174, handicap:24 },
+  { name:"Debbie", average:121, handicap:67 },
+  { name:"Jacob", average:145, handicap:48 },
+  { name:"Marcus", average:164, handicap:33 },
+  { name:"Peyton", average:241, handicap:-27 },
+  { name:"Robert", average:279, handicap:-59 },
+  { name:"Samuel", average:183, handicap:14 },
+  { name:"Tilly", average:170, handicap:28 },
+  { name:"Tito", average:177, handicap:22 },
+  { name:"Wendy", average:262, handicap:-46 }
 ];
 
 /* === Help + Reset === */
 function openHelp(){
-  alert("Tips:\n- Enter custom team names, pick sizes, then Start Teams\n- Type each player's name above their archetype\n- X auto-jumps to next frame\n- / moves within 10th or to next frame\n- Invalid frames highlight red\n- Team lines show Scratch, Handicap, and Total.\n- Use Switch View to toggle desktop/mobile layout.");
+  alert(
+`Tips:
+- Standard mode uses handicap totals.
+- Open Frame mode ignores handicaps and archetypes.
+- The Current Turn Entry panel lets you enter the active bowler's frame in one place.
+- Team order alternates by player slot: A1, B1, A2, B2, etc.
+- The turn panel auto-advances and auto-submits when the frame entry is complete.
+- X auto-jumps to next frame.
+- / moves within 10th or to next frame.
+- Invalid frames highlight red.
+- Use Switch View to toggle desktop/mobile layout.`
+  );
 }
-function resetAll(){ document.getElementById("scoreboard").innerHTML=""; }
+
+function resetAll(){
+  document.getElementById("scoreboard").innerHTML="";
+  document.getElementById("turnPanel").classList.remove("visible");
+  currentTurnIndex = 0;
+}
 
 /* === Start Game Functions === */
-function startSingle(){
-  const sb=document.getElementById("scoreboard"); sb.innerHTML="";
-  const team=document.createElement("div"); team.className="team-container"; team.dataset.teamName="Single";
-  const title=document.createElement("h2"); title.className="team-title"; title.textContent="Single Game"; team.appendChild(title);
+function startSingle(mode='standard'){
+  gameMode = mode;
+  currentTurnIndex = 0;
+
+  const sb=document.getElementById("scoreboard");
+  sb.innerHTML="";
+
+  const team=document.createElement("div");
+  team.className="team-container";
+  team.dataset.teamName = mode === "open" ? "Open Frame" : "Single";
+
+  const title=document.createElement("h2");
+  title.className="team-title";
+  title.textContent = mode === "open" ? "Single Open Frame Game" : "Single Game";
+  team.appendChild(title);
+
   buildPlayer(team,"Player 1");
   sb.appendChild(team);
+
   updateTeamTotals();
+  initTurnPanel();
 }
-function startTeamsCustom(){
+
+function startTeamsCustom(mode='standard'){
   const a=parseInt(document.getElementById('teamASelect').value,10);
   const b=parseInt(document.getElementById('teamBSelect').value,10);
   const nameA=(document.getElementById('teamAName').value||'Team A').trim();
   const nameB=(document.getElementById('teamBName').value||'Team B').trim();
-  startTeams(a,b,nameA,nameB);
+  startTeams(a,b,nameA,nameB,mode);
 }
-function startTeams(nA,nB,nameA='Team A',nameB='Team B'){
-  const sb=document.getElementById("scoreboard"); sb.innerHTML="";
-  const teamA=document.createElement("div"); teamA.className="team-container"; teamA.dataset.teamName=nameA;
-  const teamATitle=document.createElement("h2"); teamATitle.className="team-title"; teamATitle.textContent=`${nameA} (${nA})`; teamA.appendChild(teamATitle);
-  const teamB=document.createElement("div"); teamB.className="team-container"; teamB.dataset.teamName=nameB;
-  const teamBTitle=document.createElement("h2"); teamBTitle.className="team-title"; teamBTitle.textContent=`${nameB} (${nB})`; teamB.appendChild(teamBTitle);
-  sb.appendChild(teamA); sb.appendChild(teamB);
+
+function startTeams(nA,nB,nameA='Team A',nameB='Team B',mode='standard'){
+  gameMode = mode;
+  currentTurnIndex = 0;
+
+  const sb=document.getElementById("scoreboard");
+  sb.innerHTML="";
+
+  const teamA=document.createElement("div");
+  teamA.className="team-container";
+  teamA.dataset.teamName=nameA;
+
+  const teamATitle=document.createElement("h2");
+  teamATitle.className="team-title";
+  teamATitle.textContent=`${nameA} (${nA})${mode==="open" ? " — Open Frame" : ""}`;
+  teamA.appendChild(teamATitle);
+
+  const teamB=document.createElement("div");
+  teamB.className="team-container";
+  teamB.dataset.teamName=nameB;
+
+  const teamBTitle=document.createElement("h2");
+  teamBTitle.className="team-title";
+  teamBTitle.textContent=`${nameB} (${nB})${mode==="open" ? " — Open Frame" : ""}`;
+  teamB.appendChild(teamBTitle);
+
+  sb.appendChild(teamA);
+  sb.appendChild(teamB);
+
   for(let i=1;i<=nA;i++){ buildPlayer(teamA, `${nameA} — Player ${i}`); }
   for(let i=1;i<=nB;i++){ buildPlayer(teamB, `${nameB} — Player ${i}`); }
+
   updateTeamTotals();
+  initTurnPanel();
 }
 
-/* === Build Player (with editable name) === */
+/* === Build Player === */
 function buildPlayer(container,label){
-  const player=document.createElement("div"); player.className="player";
+  const player=document.createElement("div");
+  player.className="player";
 
-  const head=document.createElement("div"); head.className="player-head";
+  const head=document.createElement("div");
+  head.className="player-head";
 
   const titleWrap=document.createElement("div");
-  const title=document.createElement("h3"); title.className="player-title";
+  const title=document.createElement("h3");
+  title.className="player-title";
+
   const nameInput=document.createElement("input");
   nameInput.className="player-name-input";
   nameInput.placeholder="Player name";
@@ -227,6 +386,7 @@ function buildPlayer(container,label){
   nameInput.addEventListener("input", ()=> {
     const nm=nameInput.value.trim();
     title.textContent = nm ? nm : label;
+    syncTurnPanel();
   });
 
   title.textContent=label;
@@ -234,47 +394,117 @@ function buildPlayer(container,label){
   titleWrap.appendChild(nameInput);
   head.appendChild(titleWrap);
 
-  const pp=document.createElement("div"); pp.className="p-picker";
-  const pickLabel=document.createElement("span"); pickLabel.textContent="Archetype:";
-  const sel=document.createElement("select");
-  archetypes.forEach(a=>{ const opt=document.createElement("option"); opt.value=a.name; opt.textContent=`${a.name} • Avg ${a.average} • HCP ${a.handicap>=0?'+':''}${a.handicap}`; sel.appendChild(opt); });
-  pp.appendChild(pickLabel); pp.appendChild(sel);
+  if(gameMode !== "open"){
+    const pp=document.createElement("div");
+    pp.className="p-picker";
 
-  const archLine=document.createElement("div"); archLine.className="archetype-line"; archLine.textContent=sel.value;
-  sel.addEventListener("change",()=>{ archLine.textContent=sel.value; calculateAndDisplayScores(player); updatePlayerTotal(player); updateTeamTotals(); });
+    const pickLabel=document.createElement("span");
+    pickLabel.textContent="Archetype:";
 
-  head.appendChild(pp);
-  head.appendChild(archLine);
+    const sel=document.createElement("select");
+    archetypes.forEach(a=>{
+      const opt=document.createElement("option");
+      opt.value=a.name;
+      opt.textContent=`${a.name} • Avg ${a.average} • HCP ${a.handicap>=0?'+':''}${a.handicap}`;
+      sel.appendChild(opt);
+    });
+
+    pp.appendChild(pickLabel);
+    pp.appendChild(sel);
+
+    const archLine=document.createElement("div");
+    archLine.className="archetype-line";
+    archLine.textContent=sel.value;
+
+    sel.addEventListener("change",()=>{
+      archLine.textContent=sel.value;
+      calculateAndDisplayScores(player);
+      updatePlayerTotal(player);
+      updateTeamTotals();
+    });
+
+    head.appendChild(pp);
+    head.appendChild(archLine);
+  }
+
   player.appendChild(head);
 
-  const activeInd=document.createElement("div"); activeInd.className="active-frame-indicator"; activeInd.textContent="Enter scores for Frame 1"; player.appendChild(activeInd);
+  const activeInd=document.createElement("div");
+  activeInd.className="active-frame-indicator";
+  activeInd.textContent="Enter scores for Frame 1";
+  player.appendChild(activeInd);
 
-  const framesDiv=document.createElement("div"); framesDiv.className="frames";
+  const framesDiv=document.createElement("div");
+  framesDiv.className="frames";
   player.frames=[];
+
   for(let i=1;i<=10;i++){
-    const frame=document.createElement("div"); frame.className="frame"; if(i===1) frame.classList.add("active");
-    const inputs=document.createElement("div"); inputs.className="inputs";
-    const in1=document.createElement("input"); in1.maxLength=1; in1.placeholder=" "; in1.dataset.frame=i;
-    const in2=document.createElement("input"); in2.maxLength=1; in2.placeholder=" "; in2.dataset.frame=i;
-    inputs.appendChild(in1); inputs.appendChild(in2);
+    const frame=document.createElement("div");
+    frame.className="frame";
+    if(i===1) frame.classList.add("active");
+
+    const inputs=document.createElement("div");
+    inputs.className="inputs";
+
+    const in1=document.createElement("input");
+    in1.maxLength=1;
+    in1.placeholder=" ";
+    in1.dataset.frame=i;
+
+    const in2=document.createElement("input");
+    in2.maxLength=1;
+    in2.placeholder=" ";
+    in2.dataset.frame=i;
+
+    inputs.appendChild(in1);
+    inputs.appendChild(in2);
+
     let in3=null;
-    if(i===10){ in3=document.createElement("input"); in3.maxLength=1; in3.placeholder=" "; in3.dataset.frame=i; inputs.appendChild(in3); }
+    if(i===10){
+      in3=document.createElement("input");
+      in3.maxLength=1;
+      in3.placeholder=" ";
+      in3.dataset.frame=i;
+      inputs.appendChild(in3);
+    }
+
     [in1,in2,in3].filter(Boolean).forEach(inp=>{
       inp.addEventListener("input",()=>onInput(player,frame,inp));
       inp.addEventListener("keyup",e=>autoAdvance(inp,e));
     });
-    const score=document.createElement("div"); score.className="score"; score.textContent="0";
-    const labelEl=document.createElement("div"); labelEl.className="frame-label"; labelEl.textContent=`Frame ${i}`;
-    const err=document.createElement("div"); err.className="error-msg"; err.textContent="Invalid frame";
-    frame.appendChild(inputs); frame.appendChild(score); frame.appendChild(labelEl); frame.appendChild(err);
+
+    const score=document.createElement("div");
+    score.className="score";
+    score.textContent="0";
+
+    const labelEl=document.createElement("div");
+    labelEl.className="frame-label";
+    labelEl.textContent=`Frame ${i}`;
+
+    const err=document.createElement("div");
+    err.className="error-msg";
+    err.textContent="Invalid frame";
+
+    frame.appendChild(inputs);
+    frame.appendChild(score);
+    frame.appendChild(labelEl);
+    frame.appendChild(err);
     framesDiv.appendChild(frame);
+
     player.frames.push({ frame:i, el:frame, input1:in1, input2:in2, input3:in3, score, err });
   }
-  const totalDiv=document.createElement("div"); totalDiv.className="player-total"; totalDiv.textContent="Total (with HCP): 0";
 
-  player.appendChild(framesDiv); player.appendChild(totalDiv); container.appendChild(player);
+  const totalDiv=document.createElement("div");
+  totalDiv.className="player-total";
+  totalDiv.textContent = gameMode === "open" ? "Scratch Total: 0" : "Total (with HCP): 0";
 
-  calculateAndDisplayScores(player); updatePlayerTotal(player); updateTeamTotals();
+  player.appendChild(framesDiv);
+  player.appendChild(totalDiv);
+  container.appendChild(player);
+
+  calculateAndDisplayScores(player);
+  updatePlayerTotal(player);
+  updateTeamTotals();
   updateActiveIndicator(player);
 }
 
@@ -338,6 +568,7 @@ function onInput(player,frame,input){
   updatePlayerTotal(player);
   updateTeamTotals();
   updateActiveIndicator(player);
+  syncTurnPanel();
 }
 
 /* === Active frame indicator === */
@@ -374,7 +605,7 @@ function nextValidRoll(rolls,start){
   return 0;
 }
 
-/* === Validation (illegal frames turn red) === */
+/* === Validation === */
 function validateFrame(frame){
   frame.classList.remove('error');
   frame.querySelector('.error-msg').textContent = '';
@@ -390,49 +621,99 @@ function validateFrame(frame){
     frame.querySelector('.error-msg').textContent = msg;
   }
 
-  const isNum = v => v!=='' && !isNaN(v);
-  const asNum = v => v==='-'||v===''?0:parseInt(v);
-  const isStrike = v => v==='X';
-  const isSpare = v => v==='/' ;
+  const isNum = v => v !== '' && !isNaN(v);
+  const asNum = v => v === '-' || v === '' ? 0 : parseInt(v, 10);
+  const isStrike = v => v === 'X';
+  const isSpare = v => v === '/';
 
-  if(n<10){
+  if(n < 10){
     if(isStrike(r1)){
-      if(r2 && r2!==''){ setError("No 2nd roll after strike"); return false; }
+      if(r2){ setError("No 2nd roll after strike"); return false; }
       return true;
     }
+
     if(isStrike(r2)){ setError("Strike only allowed as 1st roll"); return false; }
     if(isSpare(r1)){ setError("Spare only allowed as 2nd roll"); return false; }
+
     if(isSpare(r2)){
-      if(r1==='' ){ setError("Enter 1st roll before spare"); return false; }
+      if(r1 === ''){ setError("Enter 1st roll before spare"); return false; }
       return true;
     }
-    if((isNum(r1) || r1==='-') && (isNum(r2) || r2==='-')){
-      const sum = asNum(r1)+asNum(r2);
-      if(sum>9){ setError("Pins can't exceed 9 (use /)"); return false; }
+
+    if((isNum(r1) || r1 === '-') && (isNum(r2) || r2 === '-')){
+      const sum = asNum(r1) + asNum(r2);
+      if(sum > 9){ setError("Pins can't exceed 9 (use /)"); return false; }
       return true;
     }
+
     return true;
-  } else {
-    // 10th frame rules
-    if(isStrike(r1)){
-      if(isSpare(r2)){ setError("Spare can't follow a strike"); return false; }
+  }
+
+  /* === 10th frame === */
+
+  if(isSpare(r1)){
+    setError("Spare only allowed as 2nd or 3rd roll");
+    return false;
+  }
+
+  if(r1 === ''){
+    if(r2 || r3){ setError("Enter 1st roll first"); return false; }
+    return true;
+  }
+
+  if(isStrike(r1)){
+    if(r2 === '') return true;
+
+    if(isSpare(r2)){
+      setError("Spare can't be the 2nd roll after a strike");
+      return false;
+    }
+
+    if(r3 === '') return true;
+
+    if(isSpare(r3)){
+      if(isStrike(r2)){
+        setError("Spare can't follow a strike");
+        return false;
+      }
       return true;
     }
-    if(isSpare(r1)){ setError("Spare only allowed as 2nd roll"); return false; }
-    if(r1===''){ return true; }
-    if(isSpare(r2)){ return true; }
-    if(isStrike(r2)){ setError("Strike only valid as 1st or 3rd in 10th"); return false; }
-    if((isNum(r1)||r1==='-') && (isNum(r2)||r2==='-')){
-      const sum = asNum(r1)+asNum(r2);
-      if(sum>9){ setError("Use / if total is 10 in 10th"); return false; }
-      if(r3 && r3!==''){ setError("No 3rd roll unless strike or spare"); return false; }
-      return true;
+
+    return true;
+  }
+
+  if(isStrike(r2)){
+    setError("Strike only valid as 1st roll unless filling after strike");
+    return false;
+  }
+
+  if(r2 === ''){
+    if(r3){ setError("Enter 2nd roll first"); return false; }
+    return true;
+  }
+
+  if(isSpare(r2)){
+    return true;
+  }
+
+  if((isNum(r1) || r1 === '-') && (isNum(r2) || r2 === '-')){
+    const sum = asNum(r1) + asNum(r2);
+    if(sum > 9){
+      setError("Use / if total is 10");
+      return false;
+    }
+    if(r3){
+      setError("No 3rd roll unless strike/spare");
+      return false;
     }
     return true;
   }
+
+  return true;
+}
 }
 
-/* === Scoring (incl. 10th-frame spare/strike partials) === */
+/* === Scoring === */
 function calculateAndDisplayScores(player){
   player.frames.forEach(fr => validateFrame(fr.el));
 
@@ -443,7 +724,7 @@ function calculateAndDisplayScores(player){
     });
   });
 
-  let runningTotal=0; 
+  let runningTotal=0;
   let rollIndex=0;
 
   player.frames.forEach((f,idx)=>{
@@ -454,41 +735,80 @@ function calculateAndDisplayScores(player){
       const second=rolls[rollIndex+1];
       const firstVal=convertRoll(first);
       let secondVal=0;
-      if(second==='/') secondVal=10-firstVal; else secondVal=convertRoll(second);
 
-      if(first==='X'){ // strike
+      if(second==='/') secondVal=10-firstVal;
+      else secondVal=convertRoll(second);
+
+      if(first==='X'){
         const bonus1=nextValidRoll(rolls,rollIndex+1);
         const secondBonusSymbol=rolls[rollIndex+2];
-        const bonus2 = (secondBonusSymbol==='/') ? (10 - bonus1) : nextValidRoll(rolls,rollIndex+2);
-        frameScore=10+bonus1+bonus2; 
+        const bonus2=(secondBonusSymbol==='/')?(10-bonus1):nextValidRoll(rolls,rollIndex+2);
+        frameScore=10+bonus1+bonus2;
         rollIndex+=1;
-      } else if(second==='/'){ // spare
-        const bonus=nextValidRoll(rolls,rollIndex+2); 
-        frameScore=10+bonus; 
-        rollIndex+=2;
-      } else if(first!==undefined && second!==undefined){
-        frameScore=firstVal+secondVal; 
+      }
+      else if(second==='/'){
+        const bonus=nextValidRoll(rolls,rollIndex+2);
+        frameScore=10+bonus;
         rollIndex+=2;
       }
-    } else {
-      const r1 = (f.input1?.value||'').toUpperCase();
-      const r2 = (f.input2?.value||'').toUpperCase();
-      const r3 = (f.input3?.value||'').toUpperCase();
+      else if(first!==undefined && second!==undefined){
+        frameScore=firstVal+secondVal;
+        rollIndex+=2;
+      }
+    }
+    else{
+      const r1=(f.input1?.value||'').toUpperCase();
+      const r2=(f.input2?.value||'').toUpperCase();
+      const r3=(f.input3?.value||'').toUpperCase();
 
-      const v1 = convertRoll(r1);
-      const v2 = (r2==='/') ? (r1 ? (10 - convertRoll(r1)) : 10) : convertRoll(r2);
-      const v3 = convertRoll(r3);
+      const val=v=>{
+        if(v==='X') return 10;
+        if(v==='-'||v==='') return 0;
+        if(!isNaN(v)) return parseInt(v);
+        return 0;
+      };
 
-      if(r1==='X'){
-        if(!r2){ frameScore = 10; }
-        else if(!r3){ frameScore = 10 + v2; }
-        else { frameScore = 10 + v2 + v3; }
-      } else if(r2==='/'){
-        frameScore = 10 + (r3 ? v3 : 0);
-      } else if(r1!=='' && r2!==''){
-        frameScore = v1 + v2;
-      } else {
-        frameScore = null;
+      if(r1===''){
+        frameScore=null;
+      }
+      else if(r1==='X'){
+        let second = val(r2);
+        if(r2==='X') second=10;
+
+        if(r2===''){
+          frameScore=10;
+        }
+        else if(r3===''){
+          frameScore=10+second;
+        }
+        else{
+          let third;
+
+          if(r3==='/'){
+            third = 10 - second;
+          } else {
+            third = val(r3);
+          }
+
+          frameScore=10+second+third;
+        }
+      }
+      else{
+        const first=val(r1);
+
+        if(r2===''){
+          frameScore=null;
+        }
+        else if(r2==='/'){
+          if(r3===''){
+            frameScore=10; // FIX: instant spare scoring
+          } else {
+            frameScore=10+val(r3);
+          }
+        }
+        else{
+          frameScore=first+val(r2);
+        }
       }
     }
 
@@ -498,16 +818,23 @@ function calculateAndDisplayScores(player){
       f.score.textContent=runningTotal;
     } else {
       f.score.style.visibility="hidden";
+      f.score.textContent="0";
     }
   });
 }
 
-/* === Totals (player + team) === */
+/* === Totals === */
 function updatePlayerTotal(player){
-  const sel=player.querySelector("select"); 
-  const archetype=archetypes.find(a=>a.name===sel.value);
-  const last=player.frames[player.frames.length-1].score; 
+  const last=player.frames[player.frames.length-1].score;
   const raw=parseInt(last.textContent)||0;
+
+  if(gameMode === "open"){
+    player.querySelector(".player-total").textContent=`Scratch Total: ${raw}`;
+    return;
+  }
+
+  const sel=player.querySelector("select");
+  const archetype=archetypes.find(a=>a.name===sel?.value);
   player.querySelector(".player-total").textContent=`Total (with HCP): ${raw + (archetype?.handicap||0)}`;
 }
 
@@ -518,16 +845,18 @@ function updateTeamTotals(){
 
     const players=team.querySelectorAll(".player");
     players.forEach(p=>{
-      const sel=p.querySelector("select"); 
-      const archetype=archetypes.find(a=>a.name===sel.value);
-      const lastScore=p.querySelector('.frame:last-child .score'); 
+      const lastScore=p.querySelector('.frame:last-child .score');
       const raw=parseInt(lastScore?.textContent||"0")||0;
-
       scratchTotal += raw;
-      handicapTotal += (archetype?.handicap || 0);
+
+      if(gameMode !== "open"){
+        const sel=p.querySelector("select");
+        const archetype=archetypes.find(a=>a.name===sel?.value);
+        handicapTotal += (archetype?.handicap || 0);
+      }
     });
 
-    const overall = scratchTotal + handicapTotal;
+    const overall = gameMode === "open" ? scratchTotal : scratchTotal + handicapTotal;
     const teamName = team.dataset.teamName || 'Team';
 
     let scratchDiv=team.querySelector(".team-total-scratch");
@@ -551,13 +880,319 @@ function updateTeamTotals(){
     }
 
     scratchDiv.textContent=`${teamName} Scratch: ${scratchTotal}`;
-    hcpDiv.textContent=`${teamName} Handicap: ${handicapTotal}`;
-    totalDiv.textContent=`${teamName} Total: ${overall}`;
+
+    if(gameMode === "open"){
+      hcpDiv.style.display = "none";
+      totalDiv.textContent=`${teamName} Open Frame Total: ${overall}`;
+    } else {
+      hcpDiv.style.display = "";
+      hcpDiv.textContent=`${teamName} Handicap: ${handicapTotal}`;
+      totalDiv.textContent=`${teamName} Total: ${overall}`;
+    }
   });
 }
 
-/* === Default landing: single player === */
-startSingle();
+/* === Turn Order Helpers === */
+function getPlayers(){
+  const teams = [...document.querySelectorAll(".team-container")];
+  if(!teams.length) return [];
+
+  if(teams.length === 1){
+    return [...teams[0].querySelectorAll(".player")];
+  }
+
+  const teamPlayers = teams.map(team => [...team.querySelectorAll(".player")]);
+  const ordered = [];
+  const maxLen = Math.max(...teamPlayers.map(arr => arr.length));
+
+  for(let i = 0; i < maxLen; i++){
+    for(const arr of teamPlayers){
+      if(arr[i]) ordered.push(arr[i]);
+    }
+  }
+
+  return ordered;
+}
+
+function getPlayerTeamName(player){
+  const team = player.closest(".team-container");
+  if(!team) return "";
+  return team.dataset.teamName || "";
+}
+
+function getPlayerName(player){
+  const input = player.querySelector(".player-name-input");
+  const title = player.querySelector(".player-title");
+  return input && input.value.trim() ? input.value.trim() : title.textContent.trim();
+}
+
+function getCurrentFrameNumber(player){
+  for(const f of player.frames){
+    if(f.frame < 10){
+      if(!f.input1.value) return f.frame;
+      if(f.input1.value !== 'X' && !f.input2.value) return f.frame;
+    } else {
+      if(!f.input1.value) return f.frame;
+      if(!f.input2.value) return f.frame;
+      if((f.input1.value === 'X' || f.input2.value === '/') && !f.input3.value) return f.frame;
+    }
+  }
+  return 11;
+}
+
+function isPlayerComplete(player){
+  return getCurrentFrameNumber(player) > 10;
+}
+
+function getActivePlayer(){
+  const players = getPlayers();
+  if(!players.length) return null;
+
+  const incomplete = players.filter(p => !isPlayerComplete(p));
+  if(!incomplete.length) return null;
+
+  currentTurnIndex = Math.max(0, Math.min(currentTurnIndex, players.length - 1));
+
+  for(let i = 0; i < players.length; i++){
+    const idx = (currentTurnIndex + i) % players.length;
+    if(!isPlayerComplete(players[idx])){
+      currentTurnIndex = idx;
+      return players[idx];
+    }
+  }
+
+  return null;
+}
+
+function moveToNextPlayer(){
+  const players = getPlayers();
+  if(!players.length) return;
+
+  for(let i = 1; i <= players.length; i++){
+    const idx = (currentTurnIndex + i) % players.length;
+    if(!isPlayerComplete(players[idx])){
+      currentTurnIndex = idx;
+      return;
+    }
+  }
+}
+
+/* === Turn Panel Helpers === */
+function clearTurnPanelInputs(keepFocus = true){
+  const r1 = document.getElementById("turnRoll1");
+  const r2 = document.getElementById("turnRoll2");
+  const r3 = document.getElementById("turnRoll3");
+
+  r1.value = "";
+  r2.value = "";
+  r3.value = "";
+
+  if(keepFocus) r1.focus();
+}
+
+function getTurnPanelValues(){
+  return {
+    r1: document.getElementById("turnRoll1").value.toUpperCase(),
+    r2: document.getElementById("turnRoll2").value.toUpperCase(),
+    r3: document.getElementById("turnRoll3").value.toUpperCase()
+  };
+}
+
+function turnPanelEntryComplete(frameNum){
+  const { r1, r2, r3 } = getTurnPanelValues();
+
+  if(frameNum < 10){
+    if(r1 === 'X') return true;
+    if(!r1) return false;
+    return !!r2;
+  }
+
+  if(!r1) return false;
+  if(!r2) return false;
+
+  if(r1 === 'X' || r2 === '/') return !!r3;
+  return true;
+}
+
+function moveTurnPanelFocus(){
+  const active = getActivePlayer();
+  if(!active) return;
+
+  const frameNum = getCurrentFrameNumber(active);
+  const r1 = document.getElementById("turnRoll1");
+  const r2 = document.getElementById("turnRoll2");
+  const r3 = document.getElementById("turnRoll3");
+  const vals = getTurnPanelValues();
+
+  if(frameNum < 10){
+    if(!vals.r1){
+      r1.focus();
+      return;
+    }
+    if(vals.r1 === 'X'){
+      submitTurnPanel();
+      return;
+    }
+    if(!vals.r2){
+      r2.focus();
+      return;
+    }
+    submitTurnPanel();
+    return;
+  }
+
+  if(!vals.r1){
+    r1.focus();
+    return;
+  }
+  if(!vals.r2){
+    r2.focus();
+    return;
+  }
+
+  if(vals.r1 === 'X' || vals.r2 === '/'){
+    if(!vals.r3){
+      r3.focus();
+      return;
+    }
+    submitTurnPanel();
+    return;
+  }
+
+  submitTurnPanel();
+}
+
+function initTurnPanel(){
+  const panel = document.getElementById("turnPanel");
+  panel.classList.add("visible");
+
+  if(!turnPanelEventsBound){
+    ["turnRoll1","turnRoll2","turnRoll3"].forEach((id, idx)=>{
+      const el = document.getElementById(id);
+
+      el.addEventListener("input", ()=>{
+        if(el.value === 'x') el.value = 'X';
+        if(!validSymbol(el.value)) el.value = '';
+
+        const active = getActivePlayer();
+        if(!active) return;
+
+        const frameNum = getCurrentFrameNumber(active);
+        const vals = getTurnPanelValues();
+
+        if(frameNum < 10){
+          if(idx === 0 && vals.r1 === 'X'){
+            document.getElementById("turnRoll2").value = "";
+          }
+          if(idx === 1 && vals.r2 === 'X'){
+            document.getElementById("turnRoll2").value = "";
+          }
+          if(idx === 0 && vals.r1 === '/'){
+            document.getElementById("turnRoll1").value = "";
+          }
+        } else {
+          if(idx === 0 && vals.r1 === '/'){
+            document.getElementById("turnRoll1").value = "";
+          }
+          if(idx === 1 && vals.r1 === 'X' && vals.r2 === '/'){
+            document.getElementById("turnRoll2").value = "";
+          }
+        }
+
+        moveTurnPanelFocus();
+      });
+
+      el.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){
+          e.preventDefault();
+          submitTurnPanel();
+        }
+      });
+    });
+
+    turnPanelEventsBound = true;
+  }
+
+  syncTurnPanel();
+}
+
+function syncTurnPanel(){
+  const active = getActivePlayer();
+  const nameEl = document.getElementById("turnName");
+  const subEl = document.getElementById("turnSub");
+  const r1 = document.getElementById("turnRoll1");
+  const r2 = document.getElementById("turnRoll2");
+  const r3 = document.getElementById("turnRoll3");
+
+  getPlayers().forEach(p => p.classList.remove("current-turn"));
+
+  if(!active){
+    nameEl.textContent = "Game Complete";
+    subEl.textContent = "All bowlers have completed 10 frames.";
+    r1.disabled = r2.disabled = r3.disabled = true;
+    return;
+  }
+
+  active.classList.add("current-turn");
+
+  const frameNum = getCurrentFrameNumber(active);
+  const playerName = getPlayerName(active);
+  const teamName = getPlayerTeamName(active);
+
+  nameEl.textContent = playerName;
+
+  if(teamName){
+    subEl.textContent = `Now bowling — ${teamName} — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
+  } else {
+    subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
+  }
+
+  r1.disabled = false;
+  r2.disabled = false;
+  r3.disabled = frameNum < 10;
+  if(frameNum < 10) r3.value = "";
+
+  clearTurnPanelInputs();
+}
+
+function submitTurnPanel(){
+  const active = getActivePlayer();
+  if(!active) return;
+
+  const frameNum = getCurrentFrameNumber(active);
+  if(frameNum > 10) return;
+
+  const frameObj = active.frames[frameNum - 1];
+  const r1 = document.getElementById("turnRoll1").value.toUpperCase();
+  const r2 = document.getElementById("turnRoll2").value.toUpperCase();
+  const r3 = document.getElementById("turnRoll3").value.toUpperCase();
+
+  frameObj.input1.value = r1;
+  frameObj.input2.value = r2;
+  if(frameObj.input3) frameObj.input3.value = r3;
+
+  sanitize(frameObj.input1);
+  sanitize(frameObj.input2);
+  if(frameObj.input3) sanitize(frameObj.input3);
+
+  const valid = validateFrame(frameObj.el);
+
+  calculateAndDisplayScores(active);
+  updatePlayerTotal(active);
+  updateTeamTotals();
+  updateActiveIndicator(active);
+
+  if(!valid){
+    alert("That frame entry is invalid. Please correct it in the Current Turn panel.");
+    return;
+  }
+
+  moveToNextPlayer();
+  syncTurnPanel();
+}
+
+/* === Default landing === */
+startSingle('standard');
 </script>
 </body>
 </html>

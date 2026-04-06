@@ -822,10 +822,27 @@ function calculateAndDisplayScores(player){
   });
 }
 
+
+function getPlayerScratchTotal(player){
+  if(!player || !player.frames) return 0;
+
+  for(let i = player.frames.length - 1; i >= 0; i--){
+    const frameScoreEl = player.frames[i]?.score;
+    if(!frameScoreEl) continue;
+
+    const visible = frameScoreEl.style.visibility !== "hidden";
+    const val = parseInt(frameScoreEl.textContent || "0", 10);
+
+    if(visible && !isNaN(val)) return val;
+  }
+
+  return 0;
+}
+
 /* === Totals === */
+
 function updatePlayerTotal(player){
-  const last=player.frames[player.frames.length-1].score;
-  const raw=parseInt(last.textContent)||0;
+  const raw = getPlayerScratchTotal(player);
 
   if(gameMode === "open"){
     player.querySelector(".player-total").textContent=`Scratch Total: ${raw}`;
@@ -844,8 +861,7 @@ function updateTeamTotals(){
 
     const players=team.querySelectorAll(".player");
     players.forEach(p=>{
-      const lastScore=p.querySelector('.frame:last-child .score');
-      const raw=parseInt(lastScore?.textContent||"0")||0;
+      const raw = getPlayerScratchTotal(p);
       scratchTotal += raw;
 
       if(gameMode !== "open"){
@@ -1172,6 +1188,8 @@ function syncTurnPanel(){
   if(frameNum < 10) r3.value = "";
 
   clearTurnPanelInputs(false);
+  r1.focus();
+  r1.select?.();
 }
 
 function submitTurnPanel(){

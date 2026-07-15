@@ -116,30 +116,94 @@
     font-size:13px;
     margin-top:8px;
   }
+  .turn-body{
+    display:grid;
+    grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr);
+    gap:14px;
+    align-items:stretch;
+  }
+  .turn-entry-card,
+  .turn-history-card{
+    background:rgba(6,10,24,.42);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+  }
+  .turn-section-title{
+    color:var(--accent);
+    font-weight:800;
+    letter-spacing:.35px;
+    margin-bottom:10px;
+  }
   .turn-stats{
     display:grid;
-    grid-template-columns:repeat(2,minmax(180px,1fr));
-    gap:10px;
+    grid-template-columns:repeat(2,minmax(130px,1fr));
+    gap:8px;
     margin-top:12px;
   }
   .turn-stat{
     background:rgba(10,15,35,.72);
     border:1px solid var(--border);
-    border-radius:12px;
-    padding:10px 12px;
+    border-radius:11px;
+    padding:9px 10px;
   }
   .turn-stat-label{
     color:var(--muted);
-    font-size:12px;
+    font-size:11px;
     font-weight:700;
     letter-spacing:.3px;
-    margin-bottom:4px;
+    margin-bottom:3px;
   }
   .turn-stat-value{
     color:#fff2b6;
-    font-size:22px;
+    font-size:21px;
     font-weight:800;
     line-height:1.1;
+  }
+  .recent-frames{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+  }
+  .recent-frame{
+    min-height:128px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    background:rgba(10,15,35,.72);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    text-align:center;
+  }
+  .recent-frame.empty{
+    opacity:.55;
+  }
+  .recent-frame-number{
+    color:var(--accent);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.35px;
+  }
+  .recent-frame-rolls{
+    color:var(--fg);
+    font-family:"Rajdhani",system-ui;
+    font-size:26px;
+    font-weight:700;
+    line-height:1.05;
+    margin:8px 0;
+    min-height:28px;
+  }
+  .recent-frame-details{
+    display:grid;
+    gap:3px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:700;
+  }
+  .recent-frame-details strong{
+    color:var(--success);
+    font-size:14px;
   }
 
   .scoreboard{ display:grid; gap:14px; }
@@ -194,6 +258,21 @@
 
   @media (max-width: 820px){
     .picker input{ width:100%; }
+    .turn-body{ grid-template-columns:1fr; }
+  }
+  @media (max-width: 520px){
+    .turn-stats{ grid-template-columns:1fr 1fr; }
+    .recent-frames{ grid-template-columns:1fr; }
+    .recent-frame{
+      min-height:0;
+      display:grid;
+      grid-template-columns:70px 1fr 110px;
+      align-items:center;
+      text-align:left;
+      gap:8px;
+    }
+    .recent-frame-rolls{ margin:0; text-align:center; }
+    .recent-frame-details{ text-align:right; }
   }
 </style>
 </head>
@@ -213,6 +292,22 @@
     <div class="row">
       <button class="btn" onclick="startSingle('standard')">Single (1P)</button>
       <button class="btn accent" onclick="startSingle('open')">Single Open Frame</button>
+    </div>
+
+    <div class="group-title">One Team</div>
+    <div class="row">
+      <div class="picker">
+        <span class="label">Team name</span>
+        <input id="singleTeamName" type="text" placeholder="Team Name" />
+      </div>
+      <div class="picker">
+        <span class="label">Team size</span>
+        <select id="singleTeamSelect">
+          <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
+        </select>
+      </div>
+      <button class="btn secondary" onclick="startOneTeamCustom('standard')">Start One Team</button>
+      <button class="btn accent" onclick="startOneTeamCustom('open')">Start Open Frame Team</button>
     </div>
 
     <div class="group-title">Two Teams</div>
@@ -252,32 +347,47 @@
     <div class="turn-header">Current Turn Entry</div>
     <div id="turnName" class="turn-name">No active bowler</div>
     <div id="turnSub" class="turn-sub">Start a game to begin.</div>
-    <div class="turn-inputs">
-      <div class="turn-rolls">
-        <input id="turnRoll1" maxlength="1" placeholder="1">
-        <input id="turnRoll2" maxlength="1" placeholder="2">
-        <input id="turnRoll3" maxlength="1" placeholder="3">
+    <div class="turn-body">
+      <div class="turn-entry-card">
+        <div class="turn-section-title">Enter Current Frame</div>
+        <div class="turn-inputs">
+          <div class="turn-rolls">
+            <input id="turnRoll1" maxlength="1" placeholder="1">
+            <input id="turnRoll2" maxlength="1" placeholder="2">
+            <input id="turnRoll3" maxlength="1" placeholder="3">
+          </div>
+          <button class="btn secondary" onclick="submitTurnPanel()">Enter Frame</button>
+          <button class="btn ghost" onclick="clearTurnPanelInputs()">Clear</button>
+        </div>
+        <div class="turn-help">Use numbers, X, /, or - . The panel updates to the current bowler and current frame automatically.</div>
+
+        <div class="turn-stats">
+          <div class="turn-stat">
+            <div class="turn-stat-label">Player Scratch</div>
+            <div id="turnPlayerScratch" class="turn-stat-value">0</div>
+          </div>
+          <div class="turn-stat">
+            <div class="turn-stat-label">Player Total</div>
+            <div id="turnPlayerTotal" class="turn-stat-value">0</div>
+          </div>
+          <div class="turn-stat">
+            <div class="turn-stat-label">Team Scratch</div>
+            <div id="turnTeamScratch" class="turn-stat-value">0</div>
+          </div>
+          <div class="turn-stat">
+            <div class="turn-stat-label">Team Total</div>
+            <div id="turnTeamTotal" class="turn-stat-value">0</div>
+          </div>
+        </div>
       </div>
-      <button class="btn secondary" onclick="submitTurnPanel()">Enter Frame</button>
-      <button class="btn ghost" onclick="clearTurnPanelInputs()">Clear</button>
-    </div>
-    <div class="turn-help">Use numbers, X, /, or - . The panel updates to the current bowler and current frame automatically.</div>
-    <div class="turn-stats">
-      <div class="turn-stat">
-        <div class="turn-stat-label">Player Scratch</div>
-        <div id="turnPlayerScratch" class="turn-stat-value">0</div>
-      </div>
-      <div class="turn-stat">
-        <div class="turn-stat-label">Player Total</div>
-        <div id="turnPlayerTotal" class="turn-stat-value">0</div>
-      </div>
-      <div class="turn-stat">
-        <div class="turn-stat-label">Team Scratch</div>
-        <div id="turnTeamScratch" class="turn-stat-value">0</div>
-      </div>
-      <div class="turn-stat">
-        <div class="turn-stat-label">Team Total</div>
-        <div id="turnTeamTotal" class="turn-stat-value">0</div>
+
+      <div class="turn-history-card">
+        <div class="turn-section-title">Last Three Frames</div>
+        <div id="turnRecentFrames" class="recent-frames">
+          <div class="recent-frame empty"><div class="recent-frame-number">Frame —</div><div class="recent-frame-rolls">—</div><div class="recent-frame-details"><span>Frame Score</span><strong>—</strong><span>Running Total —</span></div></div>
+          <div class="recent-frame empty"><div class="recent-frame-number">Frame —</div><div class="recent-frame-rolls">—</div><div class="recent-frame-details"><span>Frame Score</span><strong>—</strong><span>Running Total —</span></div></div>
+          <div class="recent-frame empty"><div class="recent-frame-number">Frame —</div><div class="recent-frame-rolls">—</div><div class="recent-frame-details"><span>Frame Score</span><strong>—</strong><span>Running Total —</span></div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -327,8 +437,9 @@ function openHelp(){
 `Tips:
 - Standard mode uses handicap totals.
 - Open Frame mode ignores handicaps and archetypes.
-- The Current Turn Entry panel lets you enter the active bowler's frame in one place.
-- Team order alternates by player slot: A1, B1, A2, B2, etc.
+- The Current Turn Entry panel shows live player/team totals and the active bowler's last three frames.
+- One Team mode supports 1–5 bowlers with the same Standard and Open Frame options.
+- Two-team order alternates by player slot: A1, B1, A2, B2, etc.
 - The turn panel auto-advances and auto-submits when the frame entry is complete.
 - X auto-jumps to next frame.
 - / moves within 10th or to next frame.
@@ -362,6 +473,38 @@ function startSingle(mode='standard'){
 
   buildPlayer(team,"Player 1");
   sb.appendChild(team);
+
+  updateTeamTotals();
+  initTurnPanel();
+}
+
+function startOneTeamCustom(mode='standard'){
+  const size=parseInt(document.getElementById('singleTeamSelect').value,10);
+  const name=(document.getElementById('singleTeamName').value||'Team').trim();
+  startOneTeam(size,name,mode);
+}
+
+function startOneTeam(size,name='Team',mode='standard'){
+  gameMode = mode;
+  currentTurnIndex = 0;
+
+  const sb=document.getElementById("scoreboard");
+  sb.innerHTML="";
+
+  const team=document.createElement("div");
+  team.className="team-container";
+  team.dataset.teamName=name;
+
+  const title=document.createElement("h2");
+  title.className="team-title";
+  title.textContent=`${name} (${size})${mode==="open" ? " — Open Frame" : ""}`;
+  team.appendChild(title);
+
+  sb.appendChild(team);
+
+  for(let i=1;i<=size;i++){
+    buildPlayer(team, `${name} — Player ${i}`);
+  }
 
   updateTeamTotals();
   initTurnPanel();
@@ -464,6 +607,7 @@ function buildPlayer(container,label){
       calculateAndDisplayScores(player);
       updatePlayerTotal(player);
       updateTeamTotals();
+      updateTurnPanelDisplayOnly();
     });
 
     head.appendChild(pp);
@@ -883,60 +1027,204 @@ function getPlayerScratchTotal(player){
 }
 
 function getPlayerTotalValue(player){
-  const raw = getPlayerScratchTotal(player);
+  const scratch = getPlayerScratchTotal(player);
+  if(gameMode === "open") return scratch;
 
-  if(gameMode === "open") return raw;
-
-  const sel = player?.querySelector("select");
-  const archetype = archetypes.find(a => a.name === sel?.value);
-  return raw + (archetype?.handicap || 0);
+  const sel=player?.querySelector("select");
+  const archetype=archetypes.find(a=>a.name===sel?.value);
+  return scratch + (archetype?.handicap || 0);
 }
 
 function getTeamScratchTotal(team){
   if(!team) return 0;
 
-  let scratchTotal = 0;
+  let total=0;
   team.querySelectorAll(".player").forEach(player=>{
-    scratchTotal += getPlayerScratchTotal(player);
+    total += getPlayerScratchTotal(player);
   });
-  return scratchTotal;
+  return total;
 }
 
 function getTeamTotalValue(team){
   if(!team) return 0;
 
-  const scratchTotal = getTeamScratchTotal(team);
-  if(gameMode === "open") return scratchTotal;
+  const scratch = getTeamScratchTotal(team);
+  if(gameMode === "open") return scratch;
 
-  let handicapTotal = 0;
+  let handicap=0;
   team.querySelectorAll(".player").forEach(player=>{
-    const sel = player.querySelector("select");
-    const archetype = archetypes.find(a => a.name === sel?.value);
-    handicapTotal += (archetype?.handicap || 0);
+    const sel=player.querySelector("select");
+    const archetype=archetypes.find(a=>a.name===sel?.value);
+    handicap += (archetype?.handicap || 0);
   });
 
-  return scratchTotal + handicapTotal;
+  return scratch + handicap;
+}
+
+function getFrameRunningTotal(frameObj){
+  if(!frameObj?.score) return null;
+  if(frameObj.score.style.visibility === "hidden") return null;
+
+  const value=parseInt(frameObj.score.textContent || "",10);
+  return Number.isFinite(value) ? value : null;
+}
+
+function getFrameRollText(frameObj){
+  if(!frameObj) return "—";
+
+  const rolls=[frameObj.input1,frameObj.input2,frameObj.input3]
+    .filter(Boolean)
+    .map(input=>(input.value || "").toUpperCase())
+    .filter(Boolean);
+
+  return rolls.length ? rolls.join("  ") : "—";
+}
+
+function getFollowingEnteredRolls(player,frameIndex){
+  const rolls=[];
+
+  for(let i=frameIndex+1;i<player.frames.length;i++){
+    const frame=player.frames[i];
+    [frame.input1,frame.input2,frame.input3].filter(Boolean).forEach(input=>{
+      const value=(input.value || "").toUpperCase();
+      if(value) rolls.push(value);
+    });
+  }
+
+  return rolls;
+}
+
+function isFrameScoreResolved(player,frameIndex){
+  const frame=player.frames[frameIndex];
+  if(!frame) return false;
+
+  const r1=(frame.input1?.value || "").toUpperCase();
+  const r2=(frame.input2?.value || "").toUpperCase();
+  const r3=(frame.input3?.value || "").toUpperCase();
+
+  if(frameIndex < 9){
+    if(!r1) return false;
+
+    if(r1 === "X"){
+      return getFollowingEnteredRolls(player,frameIndex).length >= 2;
+    }
+
+    if(!r2) return false;
+
+    if(r2 === "/"){
+      return getFollowingEnteredRolls(player,frameIndex).length >= 1;
+    }
+
+    return true;
+  }
+
+  if(!r1 || !r2) return false;
+  if(r1 === "X" || r2 === "/") return Boolean(r3);
+  return true;
+}
+
+function getFramePointValue(player,frameIndex){
+  if(!isFrameScoreResolved(player,frameIndex)) return null;
+
+  const current=getFrameRunningTotal(player.frames[frameIndex]);
+  if(current === null) return null;
+
+  if(frameIndex === 0) return current;
+
+  const previous=getFrameRunningTotal(player.frames[frameIndex-1]);
+  return previous === null ? null : current - previous;
 }
 
 function updateTurnPanelStats(player){
-  const playerScratchEl = document.getElementById("turnPlayerScratch");
-  const playerTotalEl = document.getElementById("turnPlayerTotal");
-  const teamScratchEl = document.getElementById("turnTeamScratch");
-  const teamTotalEl = document.getElementById("turnTeamTotal");
+  const playerScratchEl=document.getElementById("turnPlayerScratch");
+  const playerTotalEl=document.getElementById("turnPlayerTotal");
+  const teamScratchEl=document.getElementById("turnTeamScratch");
+  const teamTotalEl=document.getElementById("turnTeamTotal");
 
   if(!player){
-    if(playerScratchEl) playerScratchEl.textContent = "0";
-    if(playerTotalEl) playerTotalEl.textContent = "0";
-    if(teamScratchEl) teamScratchEl.textContent = "0";
-    if(teamTotalEl) teamTotalEl.textContent = "0";
+    [playerScratchEl,playerTotalEl,teamScratchEl,teamTotalEl].forEach(el=>{
+      if(el) el.textContent="0";
+    });
     return;
   }
 
-  const team = player.closest(".team-container");
-  if(playerScratchEl) playerScratchEl.textContent = String(getPlayerScratchTotal(player));
-  if(playerTotalEl) playerTotalEl.textContent = String(getPlayerTotalValue(player));
-  if(teamScratchEl) teamScratchEl.textContent = String(getTeamScratchTotal(team));
-  if(teamTotalEl) teamTotalEl.textContent = String(getTeamTotalValue(team));
+  const team=player.closest(".team-container");
+
+  if(playerScratchEl) playerScratchEl.textContent=String(getPlayerScratchTotal(player));
+  if(playerTotalEl) playerTotalEl.textContent=String(getPlayerTotalValue(player));
+  if(teamScratchEl) teamScratchEl.textContent=String(getTeamScratchTotal(team));
+  if(teamTotalEl) teamTotalEl.textContent=String(getTeamTotalValue(team));
+}
+
+function updateTurnPanelRecentFrames(player){
+  const container=document.getElementById("turnRecentFrames");
+  if(!container) return;
+
+  if(!player){
+    container.innerHTML=Array.from({length:3},()=>`
+      <div class="recent-frame empty">
+        <div class="recent-frame-number">Frame —</div>
+        <div class="recent-frame-rolls">—</div>
+        <div class="recent-frame-details">
+          <span>Frame Score</span>
+          <strong>—</strong>
+          <span>Running Total —</span>
+        </div>
+      </div>
+    `).join("");
+    return;
+  }
+
+  const currentFrame=getCurrentFrameNumber(player);
+  const lastCompletedIndex=currentFrame > 10 ? 9 : currentFrame - 2;
+  const indexes=[];
+
+  for(let i=Math.max(0,lastCompletedIndex-2); i<=lastCompletedIndex; i++){
+    if(i >= 0 && i < player.frames.length) indexes.push(i);
+  }
+
+  const padded=[
+    ...Array(Math.max(0,3-indexes.length)).fill(null),
+    ...indexes
+  ];
+
+  container.innerHTML=padded.map(frameIndex=>{
+    if(frameIndex === null){
+      return `
+        <div class="recent-frame empty">
+          <div class="recent-frame-number">Frame —</div>
+          <div class="recent-frame-rolls">—</div>
+          <div class="recent-frame-details">
+            <span>Frame Score</span>
+            <strong>—</strong>
+            <span>Running Total —</span>
+          </div>
+        </div>
+      `;
+    }
+
+    const frameObj=player.frames[frameIndex];
+    const resolved=isFrameScoreResolved(player,frameIndex);
+    const running=resolved ? getFrameRunningTotal(frameObj) : null;
+    const framePoints=getFramePointValue(player,frameIndex);
+
+    return `
+      <div class="recent-frame">
+        <div class="recent-frame-number">Frame ${frameIndex+1}</div>
+        <div class="recent-frame-rolls">${getFrameRollText(frameObj)}</div>
+        <div class="recent-frame-details">
+          <span>Frame Score</span>
+          <strong>${framePoints === null ? "Pending" : framePoints}</strong>
+          <span>Running Total ${running === null ? "Pending" : running}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateTurnPanelDetails(player){
+  updateTurnPanelStats(player);
+  updateTurnPanelRecentFrames(player);
 }
 
 /* === Totals === */
@@ -1036,7 +1324,16 @@ function getPlayerTeamName(player){
 function getPlayerName(player){
   const input = player.querySelector(".player-name-input");
   const title = player.querySelector(".player-title");
-  return input && input.value.trim() ? input.value.trim() : title.textContent.trim();
+
+  if(input && input.value.trim()) return input.value.trim();
+
+  const fallback=title.textContent.trim();
+  const teamName=getPlayerTeamName(player);
+  const prefix=teamName ? `${teamName} — ` : "";
+
+  return prefix && fallback.startsWith(prefix)
+    ? fallback.slice(prefix.length)
+    : fallback;
 }
 
 function getCurrentFrameNumber(player){
@@ -1227,7 +1524,7 @@ function updateTurnPanelDisplayOnly(){
     nameEl.textContent = "Game Complete";
     subEl.textContent = "All bowlers have completed 10 frames.";
     r1.disabled = r2.disabled = r3.disabled = true;
-    updateTurnPanelStats(null);
+    updateTurnPanelDetails(null);
     return;
   }
 
@@ -1245,7 +1542,7 @@ function updateTurnPanelDisplayOnly(){
     subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
   }
 
-  updateTurnPanelStats(active);
+  updateTurnPanelDetails(active);
 
   r1.disabled = false;
   r2.disabled = false;
@@ -1266,7 +1563,7 @@ function syncTurnPanel(){
     nameEl.textContent = "Game Complete";
     subEl.textContent = "All bowlers have completed 10 frames.";
     r1.disabled = r2.disabled = r3.disabled = true;
-    updateTurnPanelStats(null);
+    updateTurnPanelDetails(null);
     return;
   }
 
@@ -1284,7 +1581,7 @@ function syncTurnPanel(){
     subEl.textContent = `Now bowling — ${playerName} — Frame ${frameNum}${gameMode === "open" ? " (Open Frame Mode)" : ""}`;
   }
 
-  updateTurnPanelStats(active);
+  updateTurnPanelDetails(active);
 
   r1.disabled = false;
   r2.disabled = false;
